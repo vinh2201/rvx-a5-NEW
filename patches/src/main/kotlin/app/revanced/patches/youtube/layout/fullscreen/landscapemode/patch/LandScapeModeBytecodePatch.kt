@@ -1,6 +1,7 @@
 package app.revanced.patches.youtube.layout.fullscreen.landscapemode.patch
 
 import app.revanced.patcher.CompositeMatch
+import app.revanced.patcher.patch.BytecodePatchContext
 import app.revanced.patcher.extensions.addInstructions
 import app.revanced.patcher.extensions.getInstruction
 import app.revanced.patcher.patch.bytecodePatch
@@ -14,6 +15,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 private const val INTEGRATIONS_CLASS_DESCRIPTOR =
     "$FULLSCREEN_LAYOUT->disableLandScapeMode(Z)Z"
 
+context(_: BytecodePatchContext)
 private fun CompositeMatch.injectOverride() {
     val index = this[-1]
 

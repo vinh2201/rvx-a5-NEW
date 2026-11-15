@@ -1,6 +1,7 @@
 package app.revanced.patches.youtube.layout.general.mixplaylists.bytecode.patch
 
 import app.revanced.patcher.CompositeMatch
+import app.revanced.patcher.patch.BytecodePatchContext
 import app.revanced.patcher.extensions.getInstruction
 import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.youtube.layout.general.mixplaylists.bytecode.fingerprints.createMixPlaylistMethodMatch
@@ -11,12 +12,14 @@ import app.revanced.patches.youtube.misc.resourceid.patch.sharedResourceIdPatch
 import app.revanced.shared.extensions.injectHideCall
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 
+context(_: BytecodePatchContext)
 private fun CompositeMatch.addHook() {
     val insertIndex = this[-1] - 3
     val register = method.getInstruction<OneRegisterInstruction>(insertIndex - 2).registerA
     method.injectHideCall(insertIndex, register, "layout/GeneralLayoutPatch", "hideMixPlaylists")
 }
 
+context(_: BytecodePatchContext)
 private fun CompositeMatch.hookMixPlaylists() {
     // third: iput-object, fourth: check-cast; both have the register in registerA
     val endIndex = this[-1]

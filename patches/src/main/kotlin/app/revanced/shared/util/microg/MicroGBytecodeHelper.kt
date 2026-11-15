@@ -32,6 +32,7 @@ internal object MicroGBytecodeHelper {
      *
      * @param match The match of the method to add the call for the notice in.
      */
+    context(_: BytecodePatchContext)
     fun injectNotice(match: CompositeMatch) {
         match.method.addInstruction(
             0,
@@ -71,6 +72,7 @@ internal object MicroGBytecodeHelper {
         /**
          * Patch the prime method to accept the new package name.
          */
+        context(_: BytecodePatchContext)
         fun transformPrimeMethodPackageName() {
             val primeMethod = primeMethodMatch.method
             val implementation = primeMethod.implementation!!
@@ -105,6 +107,7 @@ internal object MicroGBytecodeHelper {
      * @param primeMethodTransformationData Data to patch the prime method.
      * @param earlyReturns List of [CompositeMatch] to return the matched methods early.
      */
+    context(_: BytecodePatchContext)
     fun patchBytecode(
         context: BytecodePatchContext,
         additionalStringTransforms: Array<(str: String) -> String?>,
@@ -238,6 +241,7 @@ internal object MicroGBytecodeHelper {
     /**
      * Return the matched methods of a list of [CompositeMatch] early.
      */
+    context(_: BytecodePatchContext)
     private fun List<CompositeMatch>.returnEarly() {
         this.forEach { match ->
             val method: MutableMethod = match.method

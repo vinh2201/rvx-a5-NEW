@@ -1,6 +1,7 @@
 package app.revanced.patches.youtube.misc.openlinksdirectly.bytecode.patch
 
 import app.revanced.patcher.CompositeMatch
+import app.revanced.patcher.patch.BytecodePatchContext
 import app.revanced.patcher.extensions.getInstruction
 import app.revanced.patcher.extensions.replaceInstruction
 import app.revanced.patcher.patch.bytecodePatch
@@ -9,6 +10,7 @@ import app.revanced.patches.youtube.misc.openlinksdirectly.bytecode.fingerprints
 import app.revanced.shared.util.integrations.Constants.MISC_PATH
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 
+context(_: BytecodePatchContext)
 private fun CompositeMatch.hookRedirect() {
     val insertIndex = this[0]
     val register = method.getInstruction<FiveRegisterInstruction>(insertIndex).registerC

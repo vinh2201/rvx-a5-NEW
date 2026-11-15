@@ -81,12 +81,15 @@ abstract class BaseGestureController(
         resetScroller()
     }
 
+    // The first event is nullable in the Android SDK (API 33+ annotations), the signature has to match it.
     override fun onScroll(
-        from: MotionEvent,
+        from: MotionEvent?,
         to: MotionEvent,
         distanceX: Float,
         distanceY: Float
     ): Boolean {
+        if (from == null) return false
+
         // submit to swipe detector
         submitForSwipe(from, to, distanceX, distanceY)
 
