@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="revanced_spoof_client_general_options_entries">
+        <item>@string/revanced_spoof_client_options_entry_android_vr</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr_1_43</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr_pico</item>
+        <item>@string/revanced_spoof_client_options_entry_android_xr</item>
+        <item>@string/revanced_spoof_client_options_entry_android_creator</item>
+        <item>@string/revanced_spoof_client_options_entry_android_unplugged</item>
+    </string-array>
+    <string-array name="revanced_spoof_client_general_options_entry_values">
+        <item>ANDROID_VR</item>
+        <item>ANDROID_VR_1_43</item>
+        <item>ANDROID_VR_PICO</item>
+        <item>ANDROID_XR</item>
+        <item>ANDROID_CREATOR</item>
+        <item>ANDROID_UNPLUGGED</item>
+    </string-array>
+    <string-array name="revanced_spoof_client_livestream_options_entries">
+        <item>@string/revanced_spoof_client_options_entry_android_vr</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr_1_43</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr_pico</item>
+        <item>@string/revanced_spoof_client_options_entry_android_xr</item>
+        <item>@string/revanced_spoof_client_options_entry_android_unplugged</item>
+    </string-array>
+    <string-array name="revanced_spoof_client_livestream_options_entry_values">
+        <item>ANDROID_VR</item>
+        <item>ANDROID_VR_1_43</item>
+        <item>ANDROID_VR_PICO</item>
+        <item>ANDROID_XR</item>
+        <item>ANDROID_UNPLUGGED</item>
+    </string-array>
+    <string-array name="revanced_spoof_client_shorts_options_entries">
+        <item>@string/revanced_spoof_client_options_entry_android_vr</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr_1_43</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr_pico</item>
+        <item>@string/revanced_spoof_client_options_entry_android_xr</item>
+        <item>@string/revanced_spoof_client_options_entry_android_creator</item>
+    </string-array>
+    <string-array name="revanced_spoof_client_shorts_options_entry_values">
+        <item>ANDROID_VR</item>
+        <item>ANDROID_VR_1_43</item>
+        <item>ANDROID_VR_PICO</item>
+        <item>ANDROID_XR</item>
+        <item>ANDROID_CREATOR</item>
+    </string-array>
+    <string-array name="revanced_spoof_client_fallback_options_entries">
+        <item>@string/revanced_spoof_client_options_entry_android_creator</item>
+        <item>@string/revanced_spoof_client_options_entry_android_unplugged</item>
+        <item>@string/revanced_spoof_client_options_entry_android_xr</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr_pico</item>
+        <item>@string/revanced_spoof_client_options_entry_android_vr</item>
+    </string-array>
+    <string-array name="revanced_spoof_client_fallback_options_entry_values">
+        <item>ANDROID_CREATOR</item>
+        <item>ANDROID_UNPLUGGED</item>
+        <item>ANDROID_XR</item>
+        <item>ANDROID_VR_PICO</item>
+        <item>ANDROID_VR</item>
+    </string-array>
+</resources>

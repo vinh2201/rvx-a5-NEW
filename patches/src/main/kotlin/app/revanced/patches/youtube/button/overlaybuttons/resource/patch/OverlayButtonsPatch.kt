@@ -1,0 +1,107 @@
+package app.revanced.patches.youtube.button.overlaybuttons.resource.patch
+
+import app.revanced.patcher.patch.resourcePatch
+import app.revanced.patches.youtube.button.autorepeat.patch.autoRepeatPatch
+import app.revanced.patches.youtube.button.overlaybuttons.bytecode.patch.overlayButtonsBytecodePatch
+import app.revanced.patches.youtube.misc.settings.resource.patch.settingsPatch
+import app.revanced.shared.patches.options.overlayButtonsIconOption
+import app.revanced.shared.util.resources.ResourceHelper
+import app.revanced.shared.util.resources.ResourceUtils
+import app.revanced.shared.util.resources.ResourceUtils.copyResources
+import app.revanced.shared.util.resources.ResourceUtils.copyXmlNode
+
+// Old name: overlay-buttons (class name in the old code: OverlayButtonsResourcePatch)
+val overlayButtonsResourcePatch = resourcePatch(
+    name = "Overlay buttons",
+    description = "Add overlay buttons for ReVanced Extended.",
+) {
+    compatibleWith("com.google.android.youtube"("16.40.36"))
+
+    dependsOn(
+        autoRepeatPatch,
+        overlayButtonsBytecodePatch,
+        settingsPatch,
+    )
+
+    overlayButtonsIconOption()
+
+    apply {
+        val icon by overlayButtonsIconOption
+
+        /*
+         * Copy resources
+         */
+        arrayOf(
+            ResourceUtils.ResourceGroup(
+                "drawable",
+                "playlist_repeat_button.xml",
+                "playlist_shuffle_button.xml",
+                "revanced_repeat_icon.xml"
+            )
+        ).forEach { resourceGroup ->
+            copyResources("youtube/overlaybuttons", resourceGroup)
+        }
+
+        arrayOf(
+            ResourceUtils.ResourceGroup(
+                "drawable-xxhdpi",
+                "ic_fullscreen_vertical_button.png",
+                "ic_vr.png",
+                "quantum_ic_fullscreen_exit_grey600_24.png",
+                "quantum_ic_fullscreen_exit_white_24.png",
+                "quantum_ic_fullscreen_grey600_24.png",
+                "quantum_ic_fullscreen_white_24.png",
+                "revanced_copy_icon.png",
+                "revanced_copy_icon_with_time.png",
+                "revanced_download_icon.png",
+                "yt_outline_arrow_repeat_1_white_24.png",
+                "yt_outline_arrow_shuffle_1_white_24.png",
+                "yt_outline_screen_full_exit_white_24.png",
+                "yt_outline_screen_full_white_24.png"
+            )
+        ).forEach { resourceGroup ->
+            copyResources("youtube/overlaybuttons/$icon", resourceGroup)
+        }
+
+        /*
+         * Copy preference fragments
+         */
+        copyXmlNode("youtube/overlaybuttons/host", "layout/youtube_controls_bottom_ui_container.xml", "android.support.constraint.ConstraintLayout")
+
+        val container = this["res/layout/youtube_controls_bottom_ui_container.xml"]
+        container.writeText(
+            container.readText()
+                .replace(
+                    "yt:layout_constraintRight_toLeftOf=\"@id/fullscreen_button",
+                    "yt:layout_constraintRight_toLeftOf=\"@+id/copy_button"
+                ).replace(
+                    "60",
+                    "48"
+                ).replace(
+                    "paddingBottom=\"16",
+                    "paddingBottom=\"28"
+                ).replace(
+                    "paddingLeft=\"24",
+                    "paddingLeft=\"0"
+                ).replace(
+                    "paddingRight=\"12",
+                    "paddingRight=\"0"
+                )
+        )
+
+        /*
+         add settings
+         */
+        ResourceHelper.addSettings(
+            this,
+            "PREFERENCE_CATEGORY: REVANCED_EXTENDED_SETTINGS",
+            "PREFERENCE: OVERLAY_BUTTONS",
+            "SETTINGS: OVERLAY_BUTTONS"
+        )
+
+        ResourceHelper.patchSuccess(
+            this,
+            "overlay-buttons"
+        )
+    }
+}
