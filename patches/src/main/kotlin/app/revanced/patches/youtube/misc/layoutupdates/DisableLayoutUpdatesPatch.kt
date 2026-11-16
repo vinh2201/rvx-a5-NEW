@@ -60,6 +60,7 @@ val disableLayoutUpdatesBytecodePatch = bytecodePatch(
 val disableLayoutUpdatesPatch = resourcePatch(
     name = "Disable layout updates",
     description = "Adds an option to disable layout updates by the server.",
+    use = true,
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
 

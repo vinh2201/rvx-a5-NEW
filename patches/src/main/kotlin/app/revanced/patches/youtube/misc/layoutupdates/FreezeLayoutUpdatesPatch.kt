@@ -94,6 +94,7 @@ val freezeLayoutUpdatesBytecodePatch = bytecodePatch(
 val freezeLayoutUpdatesPatch = resourcePatch(
     name = "Freeze layout updates",
     description = "Adds an option to keep the layout configuration of the first start and ignore later layout updates.",
+    use = true,
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
 
