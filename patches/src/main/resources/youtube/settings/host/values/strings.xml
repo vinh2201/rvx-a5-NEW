@@ -580,14 +580,14 @@ Rate Limited (Too many from the same user or IP)"</string>
     <!-- kitadai31 specific strings -->
     <string name="revanced_layout_updates_category">Layout updates</string>
     <string name="revanced_disable_layout_updates_title">Disable layout updates</string>
-    <string name="revanced_disable_layout_updates_summary_on">Layout updates by the server are disabled</string>
+    <string name="revanced_disable_layout_updates_summary_on">The stored layout configuration is ignored and not sent, the app uses its built-in layout. Restart the app to apply</string>
     <string name="revanced_disable_layout_updates_summary_off">Layout updates by the server are enabled</string>
     <string name="revanced_freeze_layout_updates_title">Freeze layout updates</string>
-    <string name="revanced_freeze_layout_updates_summary_on">The layout configuration is frozen, restart the app to apply</string>
+    <string name="revanced_freeze_layout_updates_summary_on">The first layout configuration that was stored is kept (it is not used while the app version is spoofed). Restart the app to apply</string>
     <string name="revanced_freeze_layout_updates_summary_off">The layout configuration is updated by the server</string>
     <string name="revanced_spoof_app_version_category">Version spoofing</string>
     <string name="revanced_spoof_app_version_title">Spoof app version</string>
-    <string name="revanced_spoof_app_version_summary_on">The server sees the version set below, restart the app to apply</string>
+    <string name="revanced_spoof_app_version_summary_on">The server sees the version set below and the stored layout configuration is ignored. Restart the app to apply</string>
     <string name="revanced_spoof_app_version_summary_off">The server sees the real app version</string>
     <string name="revanced_spoof_app_version_target_title">Version to spoof</string>
     <string name="revanced_spoof_app_version_target_summary">"Version the server sees. Empty = 20.05.46
@@ -601,6 +601,9 @@ Please read \"More information about Spoof app version\""</string>
     <string name="revanced_spoof_app_version_info_summary">https://github.com/d4n3436/revanced-patches-android5/wiki/Spoof-app-version-information</string>
     <string name="revanced_reboot_first_run">"Restart to load the layout normally when the first run.
 (Please wait 5-10 seconds before restarting to fetch layouts from the server.)"</string>
+    <string name="revanced_reboot_first_run_spoof">"First run with the spoofed app version.
+Recommended: turn on airplane mode (or disconnect from the network) for about 10 seconds so no layout of the newer app version is downloaded, then press Restart. The app then starts with its original layout.
+(The Restart button unlocks after the countdown.)"</string>
     <string name="revanced_newer_android_warning_body"><![CDATA[
 This YouTube ReVanced is <b>for Android 5</b>, but this device is Android %1$s.<br>
 <b>You may have installed the wrong version of ReVanced.</b><br>

@@ -167,6 +167,9 @@ public enum SettingsEnum {
     FROZEN_HOT_HASH_DATA("revanced_frozen_hot_hash_data", "", ReturnType.STRING),
     FROZEN_COLD_CONFIG_GROUP("revanced_frozen_cold_config_group", "", ReturnType.STRING),
     FROZEN_COLD_HASH_DATA("revanced_frozen_cold_hash_data", "", ReturnType.STRING),
+    // Internal flags of the layout configuration guard (see LayoutUpdatesPatch), not shown in the settings UI.
+    LAYOUT_CONFIG_TAINTED("revanced_layout_config_tainted", false, ReturnType.BOOLEAN),
+    LAYOUT_CONFIG_RECOVERING("revanced_layout_config_recovering", false, ReturnType.BOOLEAN),
     SPOOF_CLIENT("revanced_spoof_client", true, ReturnType.BOOLEAN, true),
     SPOOF_CLIENT_STATS_FOR_NERDS("revanced_spoof_client_stats_for_nerds", true, ReturnType.BOOLEAN),
     SPOOF_CLIENT_GENERAL("revanced_spoof_client_general", ClientType.ANDROID_VR.toString(), ReturnType.STRING, true),

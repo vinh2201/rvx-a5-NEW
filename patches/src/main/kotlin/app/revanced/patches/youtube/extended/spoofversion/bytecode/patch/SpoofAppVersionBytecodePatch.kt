@@ -5,6 +5,8 @@ import app.revanced.patcher.extensions.getInstruction
 import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.youtube.extended.spoofversion.bytecode.fingerprints.appVersionMethodMatch
 import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
+import app.revanced.patches.youtube.misc.layoutupdates.layoutConfigGuardBytecodePatch
+import app.revanced.shared.util.bytecode.BytecodeHelper
 import app.revanced.shared.util.integrations.Constants.EXTENDED_PATH
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 
@@ -14,9 +16,17 @@ val spoofAppVersionBytecodePatch = bytecodePatch(
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
 
-    dependsOn(integrationsPatch)
+    dependsOn(
+        integrationsPatch,
+        // While the version is spoofed the server answers with the layout of the newer app. The guard makes the app
+        // ignore the stored layout configuration then (see LayoutUpdatesPatch.java).
+        layoutConfigGuardBytecodePatch,
+    )
 
     apply {
+        // The guard only acts when this patch is applied.
+        BytecodeHelper.patchStatus(this, "SpoofAppVersion")
+
         // zkf.c(Context) in 16.40.36: returns the (cached) app version. The match is
         // `iget-object vX, vPackageInfo, PackageInfo->versionName` followed by `goto` / `const-string "Unset"`.
         appVersionMethodMatch.let {

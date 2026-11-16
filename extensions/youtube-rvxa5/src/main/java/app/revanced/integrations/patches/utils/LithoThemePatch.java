@@ -4,7 +4,6 @@ import static app.revanced.integrations.utils.ReVancedUtils.getContext;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import androidx.core.content.ContextCompat;
 
 public class LithoThemePatch {
     private static final int[] WHITE_VALUES = {
@@ -51,9 +50,15 @@ public class LithoThemePatch {
     private static int getColor(String name) {
         Context context = getContext();
 
-        return context != null ? ContextCompat.getColor(context, context.getResources()
-                .getIdentifier(name, "color", context.getPackageName())
-        ) : 0;
+        if (context == null) return 0;
+
+        // androidx.core.content.ContextCompat does not exist in YouTube 16.40.36 -> use the framework directly.
+        final int id = context.getResources().getIdentifier(name, "color", context.getPackageName());
+        if (id == 0) return 0;
+
+        return android.os.Build.VERSION.SDK_INT >= 23
+                ? context.getColor(id)
+                : context.getResources().getColor(id);
     }
 
     private static boolean anyEquals(int value, int... of) {

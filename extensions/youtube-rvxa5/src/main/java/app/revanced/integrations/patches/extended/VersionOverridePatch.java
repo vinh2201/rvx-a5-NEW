@@ -58,6 +58,11 @@ public class VersionOverridePatch {
     private static boolean startupGuardAllowsSpoof = true;
 
     /**
+     * Whether this process reports the spoofed version (null = not decided yet).
+     */
+    private static Boolean spoofActive;
+
+    /**
      * Injected into {@code zkf.c(Context)} (the app version getter, the result is cached by the app), right after the
      * version name has been read from the package info.
      *
@@ -72,11 +77,7 @@ public class VersionOverridePatch {
                 return version;
             }
 
-            if (!prefs.getBoolean(PREF_ENABLED, true)) {
-                return version;
-            }
-
-            if (!startupGuardAllowsSpoof(ctx, prefs)) {
+            if (!decideSpoof(ctx, prefs)) {
                 return version;
             }
 
@@ -84,6 +85,39 @@ public class VersionOverridePatch {
         } catch (Throwable ex) {
             LogHelper.printException(VersionOverridePatch.class, "Failed to get the version to spoof", ex);
             return version;
+        }
+    }
+
+    /**
+     * Setting on and not switched off by the startup safety net. The result is remembered for this process.
+     */
+    private static synchronized boolean decideSpoof(Context ctx, SharedPreferences prefs) {
+        if (spoofActive != null) {
+            return spoofActive;
+        }
+
+        boolean active = prefs.getBoolean(PREF_ENABLED, true) && startupGuardAllowsSpoof(ctx, prefs);
+        spoofActive = active;
+        return active;
+    }
+
+    /**
+     * @return true if this process reports the spoofed version to the server, so the server answers with the layout
+     * of the newer app. Used by the layout configuration guard. Returns false while the integrations context is
+     * not available yet (nothing is remembered in that case).
+     */
+    public static boolean isSpoofActive() {
+        try {
+            if (spoofActive != null) {
+                return spoofActive;
+            }
+
+            Context ctx = ReVancedUtils.context;
+            SharedPreferences prefs = SharedPrefHelper.getPreferences(ctx, SharedPrefHelper.SharedPrefNames.REVANCED);
+            return prefs != null && decideSpoof(ctx, prefs);
+        } catch (Throwable ex) {
+            LogHelper.printException(VersionOverridePatch.class, "Failed to check if the app version is spoofed", ex);
+            return false;
         }
     }
 

@@ -26,7 +26,12 @@ public class VideoQualitySettingsActivity extends Activity {
         super.onCreate(bundle);
         setContentView(identifier("revanced_settings_with_toolbar", ResourceType.LAYOUT));
         initImageButton();
-        String dataString = getIntent().getDataString();
+        // The settings entries are started with the activity's own (implicit) action plus an extra,
+        // so they do not depend on the final package name of the patched app.
+        // The data string is still read as a fallback for the old explicit-component intents.
+        String dataString = getIntent().getStringExtra("revanced_page");
+        if (dataString == null) dataString = getIntent().getDataString();
+        if (dataString == null) dataString = "revanced_settings";
 
         if (dataString.equalsIgnoreCase("sponsorblock_settings")) {
             trySetTitle(identifier("sb_settings", ResourceType.STRING));

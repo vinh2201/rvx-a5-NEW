@@ -12,7 +12,7 @@ Bộ patch kiểu ReVanced Extended cho **YouTube 16.40.36** (Android 5+), đã 
 | **Spoof video streams** | Thay patch spoof client cũ. Bảng client mới (chỉ client Android còn trả luồng trực tiếp): Android VR 1.65, VR 1.43 (không AV1), VR Pico, Android XR, Android Studio (Creator), Android TV (Unplugged). Đã bỏ iOS, TestSuite, Android, Embedded, Web, TV simply embedded. Mặc định bật, client chung/Shorts = Android VR, dự phòng = Android Studio. Có ghi đè header (User-Agent, X-YouTube-Client-*) và bỏ thông tin đăng nhập với client không cần đăng nhập. |
 | **Spoof app version** | Có công tắc bật/tắt, mặc định `20.05.46`, tối thiểu `20.02.34` (thấp hơn hoặc để trống sẽ dùng mặc định). Có cơ chế tự tắt spoof nếu app không mở được 2 lần liên tiếp. Phụ thuộc **Add missing resources**. |
 | **Add missing resources** | Bổ sung drawable/icon mà layout mới từ server cần (sửa lỗi app sập khi mở, sai icon chuông/tìm kiếm trên thanh trên cùng, theo hướng của Morphe). |
-| **Disable layout updates / Freeze layout updates** | Port từ rvx a6, sửa theo Morphe. |
+| **Disable layout updates / Freeze layout updates** | Port từ rvx a6, sửa theo Morphe, viết lại thành một "guard" dùng chung: khi **Spoof app version** đang bật (hoặc bật *Disable layout updates*) app **bỏ qua hoàn toàn layout đã lưu** và dùng layout gốc 16.40.36 như một lần cài mới, nên layout của server 20.x không bao giờ được nạp. Config nhận được lúc đang spoof bị đánh dấu "nhiễm": nếu sau đó tắt spoof, lần mở đầu vẫn bỏ qua nó một lần để server gửi config đúng phiên bản thật. *Freeze* chỉ chụp config khi không bị nhiễm. Ở lần chạy đầu khi đang spoof, hộp thoại khuyên bật chế độ máy bay ~10 giây và nút Khởi động lại đếm ngược 10 giây. |
 | **Disable update screen** | Giữ hook a5 trên 16.40.36 (hướng a6 không áp dụng được cho bản này). |
 | Ads | Thêm tên component quảng cáo/shopping mới từ rv6 và Morphe. |
 
@@ -38,13 +38,15 @@ Cần JDK 17. Dùng file `.rvp` với ReVanced CLI / Manager **hỗ trợ patche
 > **Chỉ nạp MỘT bundle khi vá YouTube 16.40.36.** Hai bundle cùng nạp trong một lần chạy CLI dùng chung một class loader: các patch trùng tên (Settings, Spoof video streams, SponsorBlock, Return YouTube Dislike, ...) sẽ chạy cả hai bản và bản của bundle kia (nhắm vào bản YouTube mới hơn) sẽ báo lỗi. Extension của bundle này có tên riêng `extensions/youtube-rvxa5.rve` để không bị lẫn với `extensions/youtube.rve` của ReVanced chính thức, nhưng vẫn nên dùng đúng một `-p patches-*.rvp` kèm `--exclusive`:
 >
 > `java -jar revanced-cli.jar patch -p patches-*.rvp --exclusive -e "Settings" -e "Hide general ads" youtube-16.40.36.apk`
+>
+> **Tên gói (package name):** patch `MicroG support` của bundle này đặt tên gói đúng bằng giá trị option bạn nhập (ví dụ `app.vinh2201.android5.youtube`), không tự thêm hậu tố. Nếu app cài ra có thêm đuôi `.revanced`, đó là do một patch khác (thường là **"Change package name"** của ReVanced chính thức, mô tả: *Appends ".revanced" to the package name by default*) đã chạy cùng. Hãy bỏ chọn patch đó, hoặc dùng `--exclusive` như trên.
 
 ## Bộ patch nên chọn để chạy được YouTube hiện nay
 
 1. **Settings**, **GmsCore support** (nếu không root), **Translations** (tuỳ chọn).
 2. **Spoof video streams**: giúp xem video khi client mặc định bị chặn.
 3. **Spoof app version** (kéo theo **Add missing resources**): server không còn phục vụ client quá cũ.
-4. **Disable layout updates** hoặc **Freeze layout updates**: tránh layout mới từ server làm app sập.
+4. **Disable layout updates** hoặc **Freeze layout updates**: bật một trong hai để có công tắc; guard layout cũng tự chạy khi **Spoof app version** được vá (xem bảng trên). **Lưu ý:** vì layout đã lưu bị bỏ qua khi spoof, vài tính năng phụ thuộc layout "mới" của server (container nút, zoom to fill ở lần chạy đầu) có thể kém hơn bản không spoof.
 5. **Disable update screen**.
 
 Trong Cài đặt của app (ReVanced Extended → Misc) có thể đổi client, đổi phiên bản spoof, bật/tắt từng chức năng. Phiên bản spoof gợi ý: `20.05.46` (khuyên dùng), `20.13.41` (khôi phục action bar không thu gọn), `20.20.42` (khôi phục bộ lọc components cũ), `21.11.48` (khôi phục hành vi phụ đề cũ).

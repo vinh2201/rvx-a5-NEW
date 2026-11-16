@@ -12,4 +12,9 @@ public class PatchStatus {
         return false;
     }
 
+    public static boolean SpoofAppVersion() {
+        // Replace this with true if the Spoof app version patch succeeds
+        return false;
+    }
+
 }
