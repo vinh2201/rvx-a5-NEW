@@ -10,7 +10,7 @@ SCR = /tmp/claude-0/-home-claude/7cbb9026-938e-5723-9df1-1254581036c4/scratchpad
 - OLD runtime extension ("integrations", Java/Kotlin, DO NOT rewrite): $SCR/src/rv5int/app/src/main/java  (already copied into the new project)
 - NEW project (write here): $SCR/out/revanced-patches-android5
   - kotlin: $PROJECT/patches/src/main/kotlin/app/revanced/...      resources: $PROJECT/patches/src/main/resources/...
-  - extension (Java/Kotlin runtime half): $PROJECT/extensions/youtube/src/main/java/app/revanced/integrations/...
+  - extension (Java/Kotlin runtime half): $PROJECT/extensions/youtube-rvxa5/src/main/java/app/revanced/integrations/...
 - REFERENCE (official ReVanced patches on patcher v22 — ground truth for syntax/imports!): $SCR/src/rv22/patches/src/main/kotlin/app/revanced
   (util already copied: $PROJECT/patches/src/main/kotlin/app/revanced/util/{BytecodeUtils,ResourceUtils,Utils,FreeRegisterProvider}.kt + util/resource/)
 - Other (RVX lineage, patcher 21 style = functional DSL already): $SCR/src/rv6 (YouTube 17.34.36). Morphe legacy (Morphe patcher, similar DSL, YouTube 19.16.39): $SCR/src/morphe/revanced-patches-legacy-main
@@ -28,7 +28,7 @@ DSL vocabulary actually used by the reference (imports with frequency): $SCR/DSL
 - Package names of patches STAY as in the old tree (`app.revanced.patches.youtube...`, `app.revanced.shared...`). Keep the old directory layout and file names where a file
   holds a patch; fingerprints of a directory are merged into ONE `Fingerprints.kt` placed in the old `fingerprints` package folder (package name unchanged).
 - Extension class descriptors are UNCHANGED: `Lapp/revanced/integrations/...` (constant `INTEGRATIONS_PATH` in shared/util/integrations/Constants.kt).
-- Runtime extension is ONE module: only `integrationsPatch` calls `extendWith("extensions/youtube.rve")`; everything else just `dependsOn(integrationsPatch)` (directly or through settingsPatch).
+- Runtime extension is ONE module: only `integrationsPatch` calls `extendWith("extensions/youtube-rvxa5.rve")`; everything else just `dependsOn(integrationsPatch)` (directly or through settingsPatch).
 - Extension Java code must stay Android-5 (API 21) safe: no java.time, no java.util.function/stream/Optional/List.of/Map.of/getOrDefault/removeIf/String.join (no desugaring!).
 
 ## 2. Naming contract (CRITICAL for cross-group references)

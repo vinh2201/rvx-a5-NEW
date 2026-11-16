@@ -3,6 +3,7 @@ package app.revanced.patches.youtube.layout.general.shortscomponent.bytecode.pat
 import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.shared.misc.mapping.ResourceType
 import app.revanced.patches.shared.misc.mapping.resourceMappingPatch
+import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.shared.extensions.applyToLiteralHits
 import app.revanced.shared.extensions.findLiteralHits
 import app.revanced.shared.extensions.injectHideCall
@@ -16,7 +17,10 @@ val shortsComponentBytecodePatch = bytecodePatch(
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
 
-    dependsOn(resourceMappingPatch)
+    dependsOn(
+        integrationsPatch, // PatchStatus (extension class) is edited below
+        resourceMappingPatch,
+    )
 
     apply {
         // drawable "ic_right_comment_32c"

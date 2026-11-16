@@ -16,7 +16,7 @@ val integrationsPatch = bytecodePatch(
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
 
-    extendWith("extensions/youtube.rve")
+    extendWith("extensions/youtube-rvxa5.rve")
 
     apply {
         // Verify that the integrations have been merged (throws a PatchException otherwise).

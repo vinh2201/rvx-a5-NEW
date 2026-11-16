@@ -9,6 +9,7 @@ import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.youtube.video.customspeed.bytecode.fingerprints.speedArrayGeneratorMethodMatch
 import app.revanced.patches.youtube.video.customspeed.bytecode.fingerprints.speedLimiterMethodMatch
 import app.revanced.patches.youtube.video.customspeed.bytecode.fingerprints.videoSpeedEntriesMethodMatch
+import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.shared.patches.options.customSpeedArraysOption
 import app.revanced.shared.util.integrations.Constants.VIDEO_PATH
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderArrayPayload
@@ -31,6 +32,9 @@ val customVideoSpeedBytecodePatch = bytecodePatch(
     description = "Adds more video speed options (bytecode).",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
+
+    // The fingerprint of VideoSpeedEntries matches a class of the extension, which is merged by integrationsPatch.
+    dependsOn(integrationsPatch)
 
     customSpeedArraysOption()
 
@@ -77,9 +81,10 @@ val customVideoSpeedBytecodePatch = bytecodePatch(
 
             val (originalArrayFetchIndex, originalArrayFetch) = implementation!!.instructions.withIndex()
                 .first {
-                    val reference = ((it.value as? ReferenceInstruction)?.reference as? FieldReference)
-                    reference?.definingClass?.contains("PlayerConfigModel") ?: false &&
-                            reference?.type == "[F"
+                    val reference = (it.value as? ReferenceInstruction)?.reference as? FieldReference
+                    reference != null &&
+                            reference.definingClass.contains("PlayerConfigModel") &&
+                            reference.type == "[F"
                 }
             val originalArrayFetchDestination = (originalArrayFetch as OneRegisterInstruction).registerA
 

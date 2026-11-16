@@ -7,6 +7,7 @@ import app.revanced.patcher.patch.PatchException
 import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.shared.misc.mapping.resourceMappingPatch
 import app.revanced.patches.youtube.ads.general.bytecode.fingerprints.componentContextParserMethodMatch
+import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.shared.util.bytecode.BytecodeHelper
 import app.revanced.shared.util.integrations.Constants.ADS_PATH
 import app.revanced.util.indexOfFirstInstructionOrThrow
@@ -35,7 +36,10 @@ val generalAdsBytecodePatch = bytecodePatch(
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
 
-    dependsOn(resourceMappingPatch)
+    dependsOn(
+        integrationsPatch, // PatchStatus (extension class) is edited below
+        resourceMappingPatch,
+    )
 
     apply {
         with(componentContextParserMethodMatch.method) {

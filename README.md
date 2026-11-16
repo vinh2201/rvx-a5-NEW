@@ -35,6 +35,10 @@ export ORG_GRADLE_PROJECT_githubPackagesPassword=<token có quyền read:package
 
 Cần JDK 17. Dùng file `.rvp` với ReVanced CLI / Manager **hỗ trợ patcher 22** (bản cũ chỉ đọc API cũ sẽ không nạp được).
 
+> **Chỉ nạp MỘT bundle khi vá YouTube 16.40.36.** Hai bundle cùng nạp trong một lần chạy CLI dùng chung một class loader: các patch trùng tên (Settings, Spoof video streams, SponsorBlock, Return YouTube Dislike, ...) sẽ chạy cả hai bản và bản của bundle kia (nhắm vào bản YouTube mới hơn) sẽ báo lỗi. Extension của bundle này có tên riêng `extensions/youtube-rvxa5.rve` để không bị lẫn với `extensions/youtube.rve` của ReVanced chính thức, nhưng vẫn nên dùng đúng một `-p patches-*.rvp` kèm `--exclusive`:
+>
+> `java -jar revanced-cli.jar patch -p patches-*.rvp --exclusive -e "Settings" -e "Hide general ads" youtube-16.40.36.apk`
+
 ## Bộ patch nên chọn để chạy được YouTube hiện nay
 
 1. **Settings**, **GmsCore support** (nếu không root), **Translations** (tuỳ chọn).
@@ -60,7 +64,7 @@ Trong Cài đặt của app (ReVanced Extended → Misc) có thể đổi client
 
 ```
 patches/            patch Kotlin + tài nguyên (patches/src/main/resources/youtube/...)
-extensions/youtube/ mã Java chạy trong app (integrations)
+extensions/youtube-rvxa5/ mã Java chạy trong app (integrations)
 docs/PORTING_GUIDE.md  ghi chú chuyển đổi API cũ -> v22
 .github/workflows/  build_pull_request.yml, release.yml
 ```
