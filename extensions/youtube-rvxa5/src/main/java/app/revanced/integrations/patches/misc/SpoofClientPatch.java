@@ -18,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes.ClientType;
 import app.revanced.integrations.settings.SettingsEnum;
+import app.revanced.integrations.utils.LogHelper;
 
 /**
  * @noinspection ALL
@@ -246,6 +247,49 @@ public class SpoofClientPatch {
     private static void putHeader(Map<String, String> headers, String name, String value) {
         removeHeader(headers, name);
         headers.put(name, value);
+    }
+
+    private static volatile boolean loggedPostBodyRemoval;
+    private static volatile int loggedVideoPlaybackRequests;
+
+    /**
+     * Injection point.
+     * <p>
+     * Called by the constructor of the data source request (ExoPlayer DataSpec) with the Uri, the http method
+     * (1 = GET, 2 = POST) and the body. ReVanced (v22) and RVX drop the body of POST /videoplayback requests when the
+     * streams come from a spoofed client: a body made for the app's own stream URLs can make the server answer
+     * with 400.
+     * <p>
+     * The first requests are logged (tag "revanced: SpoofClientPatch") to see whether the app really sends POST
+     * requests with a body for the stream that fails.
+     */
+    @Nullable
+    public static byte[] removeVideoPlaybackPostBody(Uri uri, int method, byte[] postData) {
+        if (SPOOF_CLIENT_ENABLED && uri != null) {
+            try {
+                final int methodPost = 2; // DataSpec.HTTP_METHOD_POST
+                String path = uri.getPath();
+                if (path != null && path.contains("videoplayback")) {
+                    if (loggedVideoPlaybackRequests < 6) {
+                        loggedVideoPlaybackRequests++;
+                        LogHelper.info(SpoofClientPatch.class, "videoplayback request: method=" + method
+                                + ", body=" + (postData == null ? "none" : postData.length + " bytes"));
+                    }
+
+                    if (method == methodPost && postData != null) {
+                        if (!loggedPostBodyRemoval) {
+                            loggedPostBodyRemoval = true;
+                            LogHelper.info(SpoofClientPatch.class, "Removed the body of POST videoplayback requests");
+                        }
+                        return null;
+                    }
+                }
+            } catch (Exception ex) {
+                // Never break the request.
+            }
+        }
+
+        return postData;
     }
 
     /**
