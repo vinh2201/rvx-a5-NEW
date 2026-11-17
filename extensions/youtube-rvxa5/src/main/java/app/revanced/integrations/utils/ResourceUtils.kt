@@ -15,8 +15,48 @@ object ResourceUtils {
         identifier(name, type, getContext())
 
     @JvmStatic
-    fun identifier(name: String, type: ResourceType, context: Context): Int {
-        return resources.getIdentifier(name, type.value, context.packageName)
+    fun identifier(name: String, type: ResourceType, context: Context): Int =
+        identifier(name, type.value, context)
+
+    /**
+     * Name of the package the resources of the app were compiled with (the package of resources.arsc).
+     * It is read from a resource id of the app itself, so it does not depend on the package name of the manifest.
+     */
+    @Volatile
+    private var compiledPackage: String? = null
+
+    private fun findCompiledPackage(context: Context): String? {
+        compiledPackage?.let { return it }
+
+        return try {
+            val info = context.applicationInfo
+            val sample = if (info.icon != 0) info.icon else info.labelRes
+            if (sample == 0) null else context.resources.getResourcePackageName(sample)
+                .also { compiledPackage = it }
+        } catch (ex: Throwable) {
+            null
+        }
+    }
+
+    /**
+     * Looks up a resource by name. The package name of the manifest is tried first. If the installed package name
+     * differs from the one the resources were compiled with (the package was renamed or got a suffix after the
+     * patching), the lookup falls back to the compiled package, so settings, layouts and strings still resolve.
+     */
+    @JvmStatic
+    fun identifier(name: String, defType: String, context: Context): Int {
+        val res = context.resources
+
+        val id = res.getIdentifier(name, defType, context.packageName)
+        if (id != 0) return id
+
+        val compiled = findCompiledPackage(context)
+        if (compiled != null && compiled != context.packageName) {
+            val fallback = res.getIdentifier(name, defType, compiled)
+            if (fallback != 0) return fallback
+        }
+
+        return res.getIdentifier(name, defType, null)
     }
 
     @JvmStatic

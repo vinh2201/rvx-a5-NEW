@@ -1,15 +1,7 @@
 package app.revanced.integrations.patches.extended;
 
-import static app.revanced.integrations.utils.StringRef.str;
-
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
-import android.widget.Toast;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
 
 import app.revanced.integrations.utils.LogHelper;
 import app.revanced.integrations.utils.ReVancedUtils;
@@ -22,8 +14,8 @@ import app.revanced.integrations.utils.SharedPrefHelper;
  * The server no longer serves clients that are too old: a 16.40.36 app that reports its real version gets
  * errors or an empty home feed. Spoofing a recent version (default {@link #DEFAULT_TARGET}) fixes this, but then the
  * server answers with the layout of that version. The patches "Add missing resources", "Disable layout updates" and
- * "Freeze layout updates" keep the old app from crashing on that layout, and this class adds a last safety net:
- * if the app dies on startup twice in a row while spoofing, the spoof is switched off automatically.
+ * "Freeze layout updates" keep the old app from crashing on that layout. The spoof is never switched off by the
+ * app itself: it stays on until the user turns it off in the settings.
  *
  * <p>
  * Presets worth knowing (Morphe): 20.05.46 (recommended), 20.13.41 (restores the non collapsed action bar),
@@ -42,20 +34,6 @@ public class VersionOverridePatch {
 
     private static final String PREF_ENABLED = "revanced_spoof_app_version";
     private static final String PREF_TARGET = "revanced_spoof_app_version_target";
-
-    // Startup safety net (no UI, stored in the same preferences file as the settings).
-    private static final String PREF_STARTING = "revanced_spoof_app_version_starting";
-    private static final String PREF_FAILED_STARTS = "revanced_spoof_app_version_failed_starts";
-
-    /**
-     * Consecutive starts that did not survive {@link #STARTUP_GRACE_MILLISECONDS} before the spoof is disabled.
-     */
-    private static final int MAX_FAILED_STARTS = 2;
-    private static final long STARTUP_GRACE_MILLISECONDS = 10 * 1000;
-    private static final long NOTICE_DELAY_MILLISECONDS = 6 * 1000;
-
-    private static boolean startupGuardChecked;
-    private static boolean startupGuardAllowsSpoof = true;
 
     /**
      * Whether this process reports the spoofed version (null = not decided yet).
@@ -89,14 +67,14 @@ public class VersionOverridePatch {
     }
 
     /**
-     * Setting on and not switched off by the startup safety net. The result is remembered for this process.
+     * Whether the setting is on. The result is remembered for this process.
      */
     private static synchronized boolean decideSpoof(Context ctx, SharedPreferences prefs) {
         if (spoofActive != null) {
             return spoofActive;
         }
 
-        boolean active = prefs.getBoolean(PREF_ENABLED, true) && startupGuardAllowsSpoof(ctx, prefs);
+        boolean active = prefs.getBoolean(PREF_ENABLED, true);
         spoofActive = active;
         return active;
     }
@@ -169,106 +147,4 @@ public class VersionOverridePatch {
         }
         return 0;
     }
-
-    // region startup safety net
-
-    /**
-     * The app is marked as "starting" when this process begins and the mark is removed once the process has lived
-     * {@link #STARTUP_GRACE_MILLISECONDS}. If the mark is still there at the next start the previous start did not
-     * finish (crash on open). After {@link #MAX_FAILED_STARTS} of those in a row the spoof is switched off so the
-     * app can be opened again (and the user can look at the settings).
-     *
-     * @return false if the spoof was just disabled by the safety net.
-     */
-    private static synchronized boolean startupGuardAllowsSpoof(final Context ctx, final SharedPreferences prefs) {
-        if (startupGuardChecked) {
-            return startupGuardAllowsSpoof;
-        }
-        startupGuardChecked = true;
-
-        if (!isMainProcess(ctx)) {
-            return true; // Other processes of the app must not touch the counters.
-        }
-
-        int failedStarts = prefs.getInt(PREF_FAILED_STARTS, 0);
-        if (prefs.getBoolean(PREF_STARTING, false)) {
-            failedStarts++;
-        }
-
-        if (failedStarts >= MAX_FAILED_STARTS) {
-            prefs.edit()
-                    .putBoolean(PREF_ENABLED, false)
-                    .putBoolean(PREF_STARTING, false)
-                    .putInt(PREF_FAILED_STARTS, 0)
-                    .commit();
-            startupGuardAllowsSpoof = false;
-
-            LogHelper.info(VersionOverridePatch.class, "Spoof app version disabled: the app failed to start " + failedStarts + " times");
-            showAutoDisabledNotice(ctx);
-            return false;
-        }
-
-        prefs.edit()
-                .putBoolean(PREF_STARTING, true)
-                .putInt(PREF_FAILED_STARTS, failedStarts)
-                .commit();
-
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    prefs.edit()
-                            .putBoolean(PREF_STARTING, false)
-                            .putInt(PREF_FAILED_STARTS, 0)
-                            .apply();
-                } catch (Throwable ex) {
-                    LogHelper.printException(VersionOverridePatch.class, "Failed to clear the startup mark", ex);
-                }
-            }
-        }, STARTUP_GRACE_MILLISECONDS);
-        return true;
-    }
-
-    private static void showAutoDisabledNotice(final Context ctx) {
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Toast.makeText(ctx, str("revanced_spoof_app_version_auto_disabled"), Toast.LENGTH_LONG).show();
-                } catch (Throwable ex) {
-                    LogHelper.printException(VersionOverridePatch.class, "Failed to show the notice", ex);
-                }
-            }
-        }, NOTICE_DELAY_MILLISECONDS);
-    }
-
-    /**
-     * @return true if this is the main process of the app (the package name is the process name).
-     */
-    private static boolean isMainProcess(Context ctx) {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader("/proc/self/cmdline"));
-            String processName = reader.readLine();
-            if (processName == null) {
-                return true;
-            }
-            int end = processName.indexOf('\0');
-            if (end >= 0) {
-                processName = processName.substring(0, end);
-            }
-            return processName.trim().equals(ctx.getPackageName());
-        } catch (Throwable ex) {
-            return true;
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (Throwable ignored) {
-                }
-            }
-        }
-    }
-
-    // endregion
 }

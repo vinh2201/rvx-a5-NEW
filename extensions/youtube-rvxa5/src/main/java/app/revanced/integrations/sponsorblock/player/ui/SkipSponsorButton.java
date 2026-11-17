@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import app.revanced.integrations.utils.ResourceUtils;
 import app.revanced.integrations.sponsorblock.PlayerController;
 
 public class SkipSponsorButton extends FrameLayout {
@@ -111,6 +112,6 @@ public class SkipSponsorButton extends FrameLayout {
 
     @SuppressLint("DiscouragedApi")
     private int getIdentifier(Context context, String name, String defType) {
-        return context.getResources().getIdentifier(name, defType, context.getPackageName());
+        return ResourceUtils.identifier(name, defType, context);
     }
 }

@@ -21,9 +21,12 @@ internal object MicroGResourceHelper {
         val manifest = context["AndroidManifest.xml"].readText()
         context["AndroidManifest.xml"].writeText(
             manifest.replace(
-                "package=\"$fromPackageName",
-                "package=\"$toPackageName"
-            ).replace(
+                // Set the package attribute of the <manifest> tag to exactly the requested value (same as the
+                // original "Change package name"): nothing is appended to it and nothing of the old value is kept.
+                Regex("""(<manifest\b[^>]*?\spackage=")[^"]*(")""")
+            ) { match ->
+                match.groupValues[1] + toPackageName + match.groupValues[2]
+            }.replace(
                 "android:authorities=\"$fromPackageName",
                 "android:authorities=\"$toPackageName"
             ).replace(

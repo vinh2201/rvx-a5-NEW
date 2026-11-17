@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
+import app.revanced.integrations.utils.ResourceUtils;
 import app.revanced.integrations.settings.SettingsEnum;
 import app.revanced.integrations.sponsorblock.NewSegmentHelperLayout;
 import app.revanced.integrations.sponsorblock.PlayerController;
@@ -112,6 +113,6 @@ public class NewSegmentLayout extends FrameLayout {
 
     @SuppressLint("DiscouragedApi")
     private int getIdentifier(Context context, String name, String defType) {
-        return context.getResources().getIdentifier(name, defType, context.getPackageName());
+        return ResourceUtils.identifier(name, defType, context);
     }
 }

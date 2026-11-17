@@ -5,6 +5,8 @@ import static app.revanced.integrations.utils.ReVancedUtils.getContext;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
+import app.revanced.integrations.utils.ResourceUtils;
+
 public class LithoThemePatch {
     private static final int[] WHITE_VALUES = {
         -1, // comments chip background
@@ -53,7 +55,7 @@ public class LithoThemePatch {
         if (context == null) return 0;
 
         // androidx.core.content.ContextCompat does not exist in YouTube 16.40.36 -> use the framework directly.
-        final int id = context.getResources().getIdentifier(name, "color", context.getPackageName());
+        final int id = ResourceUtils.identifier(name, "color", context);
         if (id == 0) return 0;
 
         return android.os.Build.VERSION.SDK_INT >= 23
