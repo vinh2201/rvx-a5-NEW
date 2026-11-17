@@ -8,7 +8,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: spoof-app-version
 val spoofAppVersionPatch = resourcePatch(
-    name = "Spoof app version",
+    name = "Spoof app version (A5)",
     description = "Spoofs the YouTube client version (default 20.05.46, minimum 20.02.34) so the server keeps " +
         "serving the app. Needs \"Add missing resources\" because the server then answers with the layout of the new version.",
 ) {

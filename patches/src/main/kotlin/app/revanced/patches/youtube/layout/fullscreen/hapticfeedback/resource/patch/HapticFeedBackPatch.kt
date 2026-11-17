@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: disable-haptic-feedback
 val hapticFeedBackPatch = resourcePatch(
-    name = "Disable haptic feedback",
+    name = "Disable haptic feedback (A5)",
     description = "Disable haptic feedback when swiping.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

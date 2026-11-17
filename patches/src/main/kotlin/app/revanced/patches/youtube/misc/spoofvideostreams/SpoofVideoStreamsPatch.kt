@@ -6,7 +6,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: spoof-client (replaces the old misc/spoofclient patch; same mechanism, new client table, see the extension).
 val spoofVideoStreamsPatch = resourcePatch(
-    name = "Spoof video streams",
+    name = "Spoof video streams (A5)",
     description = "Spoofs the client of the player request (Android VR / Android Studio / ...) " +
             "so that videos can be played when the default client is blocked or unsupported.",
 ) {

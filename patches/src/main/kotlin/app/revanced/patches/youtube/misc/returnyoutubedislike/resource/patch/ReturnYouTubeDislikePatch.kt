@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: return-youtube-dislike
 val returnYouTubeDislikePatch = resourcePatch(
-    name = "Return YouTube Dislike",
+    name = "Return YouTube Dislike (A5)",
     description = "Shows the dislike count of videos using the Return YouTube Dislike API.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

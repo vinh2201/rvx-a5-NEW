@@ -10,7 +10,7 @@ import app.revanced.shared.util.resources.ResourceUtils.copyResources
 
 // Old name: swipe-controls
 val swipeControlsPatch = resourcePatch(
-    name = "Swipe controls",
+    name = "Swipe controls (A5)",
     description = "Adds volume and brightness swipe controls.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

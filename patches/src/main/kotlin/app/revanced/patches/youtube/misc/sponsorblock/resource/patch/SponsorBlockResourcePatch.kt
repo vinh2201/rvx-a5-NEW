@@ -13,7 +13,7 @@ private const val CONTROLS_LAYOUT_TAG = "com.google.android.apps.youtube.app.pla
 
 // Old name: sponsorblock
 val sponsorBlockPatch = resourcePatch(
-    name = "SponsorBlock",
+    name = "SponsorBlock (A5)",
     description = "Integrates SponsorBlock which allows skipping video segments such as sponsored content.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

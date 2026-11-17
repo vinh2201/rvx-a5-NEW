@@ -8,7 +8,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-shorts-component
 val shortsComponentPatch = resourcePatch(
-    name = "Hide shorts components",
+    name = "Hide shorts components (A5)",
     description = "Hides other Shorts components.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

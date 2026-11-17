@@ -30,7 +30,7 @@ private fun ResourcePatchContext.setTheme(valuesPath: String, darkThemeBackgroun
 
 // Old name: theme
 val themePatch = resourcePatch(
-    name = "Theme",
+    name = "Theme (A5)",
     description = "Applies a custom theme (default: amoled).",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

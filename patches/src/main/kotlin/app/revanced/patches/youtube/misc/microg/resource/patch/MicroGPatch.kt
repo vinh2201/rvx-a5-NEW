@@ -15,7 +15,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: microg-support
 val microGPatch = resourcePatch(
-    name = "GmsCore support",
+    name = "GmsCore support (A5)",
     description = "Allows YouTube ReVanced to run without root and under a different package name with GmsCore. (\"GmsCore\" is new Vanced MicroG).",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

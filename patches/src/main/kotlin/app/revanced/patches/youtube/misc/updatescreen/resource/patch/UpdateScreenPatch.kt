@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: disable-update-screen
 val updateScreenPatch = resourcePatch(
-    name = "Disable update screen",
+    name = "Disable update screen (A5)",
     description = "Disables the app update screen.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
