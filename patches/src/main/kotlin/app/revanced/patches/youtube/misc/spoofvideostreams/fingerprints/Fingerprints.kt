@@ -181,26 +181,3 @@ internal val BytecodePatchContext.playerParameterBuilderMethodMatch by composing
         Opcode.INVOKE_VIRTUAL,
     )
 }
-
-// NEW (not in the old a5 patch): the data source request class (ExoPlayer "DataSpec"), constructor
-//   (Uri uri, long uriPositionOffset, int httpMethod, byte[] httpBody, Map headers, long position, long length,
-//    String key, int flags, Object customData).
-// ReVanced (v22) and RVX use this constructor to drop the body of POST /videoplayback requests.
-// UNVERIFIED for 16.40.36: look in the smali for
-//   .method public constructor <init>(Landroid/net/Uri;JI[BLjava/util/Map;JJLjava/lang/String;ILjava/lang/Object;)V
-// The class that "awa.o(Laub;)" reads the Uri and the headers (field e) from is the most likely owner.
-internal val BytecodePatchContext.buildMediaDataSourceMethod by gettingFirstMethodDeclaratively {
-    accessFlags(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR)
-    parameterTypes(
-        "Landroid/net/Uri;",
-        "J",
-        "I",
-        "[B",
-        "Ljava/util/Map;",
-        "J",
-        "J",
-        "Ljava/lang/String;",
-        "I",
-        "Ljava/lang/Object;",
-    )
-}

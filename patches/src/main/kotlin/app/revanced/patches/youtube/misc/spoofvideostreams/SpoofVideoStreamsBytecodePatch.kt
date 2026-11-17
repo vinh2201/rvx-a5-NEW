@@ -13,7 +13,6 @@ import app.revanced.patcher.patch.PatchException
 import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.buildInitPlaybackRequestMethodMatch
-import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.buildMediaDataSourceMethod
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.buildPlayerRequestUriMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.createPlaybackSpeedMenuItemMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.createPlayerRequestBodyMethodMatch
@@ -160,49 +159,6 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
                     """
                         invoke-static { v$uriRegister }, $EXTENSION_CLASS_DESCRIPTOR->blockGetWatchRequest(Landroid/net/Uri;)Landroid/net/Uri;
                         move-result-object v$uriRegister
-                    """,
-                )
-            }
-        }
-
-        // endregion
-
-        // region Remove the body of POST /videoplayback requests (NEW, same idea as ReVanced v22 / RVX).
-        // "Requesting streams intended for other platforms with a body tuned for Android could be the cause of 400 errors."
-        // The hook goes at the very start of the constructor: the body parameter is replaced before it is stored.
-        // Parameters of the constructor: p0 this, p1 Uri, p2/p3 long, p4 int (http method), p5 byte[] (body).
-
-        buildMediaDataSourceMethod.apply {
-            var parameterRegisters = 1 // "this"
-            for (type in parameterTypes) parameterRegisters += if (type.toString() == "J") 2 else 1
-
-            val firstParameterRegister = implementation!!.registerCount - parameterRegisters
-            val uriRegister = firstParameterRegister + 1
-            val methodRegister = firstParameterRegister + 4
-            val bodyRegister = firstParameterRegister + 5
-
-            val hook = "$EXTENSION_CLASS_DESCRIPTOR->removeVideoPlaybackPostBody(Landroid/net/Uri;I[B)[B"
-
-            if (bodyRegister <= 15) {
-                addInstructions(
-                    0,
-                    """
-                        invoke-static { v$uriRegister, v$methodRegister, v$bodyRegister }, $hook
-                        move-result-object v$bodyRegister
-                    """,
-                )
-            } else {
-                // The parameters are in high registers: copy them to v0..v2 (locals are not in use yet at the first
-                // instruction, and there are more than 10 of them in this case).
-                addInstructions(
-                    0,
-                    """
-                        move-object/from16 v0, p1
-                        move/from16 v1, p4
-                        move-object/from16 v2, p5
-                        invoke-static { v0, v1, v2 }, $hook
-                        move-result-object v2
-                        move-object/from16 p5, v2
                     """,
                 )
             }
