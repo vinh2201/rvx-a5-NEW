@@ -86,13 +86,23 @@ private val DRAWABLE_ALIASES: Map<String, List<String>> = linkedMapOf(
     "yt_fill_thumb_down_black_18" to listOf("yt_fill_thumb_down_black_24"),
     "yt_fill_spark_cairo_black_24" to listOf("yt_fill_sparkle_white_24"),
     "yt_fill_spark_black_24" to listOf("yt_fill_sparkle_white_24"),
+
+    // Icons of the buttons that are added to the top bar (see TopBarButtonsPatch.java): subscriptions (list of the
+    // subscribed channels, Subscriptions tab) and the settings gear (You tab). The icons are the ones the app already has.
+    "revanced_top_bar_subscriptions" to listOf(
+        "yt_outline_subscriptions_black_24",
+        "yt_fill_subscriptions_black_24",
+    ),
+    "revanced_top_bar_settings" to listOf("yt_outline_gear_black_24"),
 )
 
 // Old name: add-missing-resources (rv6: "Add missing resources")
 val addMissingResourcesPatch = resourcePatch(
     name = "Add missing resources",
     description = "Adds drawables and icon handling that newer server responses expect, " +
-        "which prevents crashes and wrong icons (bell, search, create) when the client version is spoofed.",
+        "which prevents crashes and wrong icons (bell, search, create) when the client version is spoofed. " +
+        "Also adds the buttons that the old UI is missing: the list of subscribed channels (Subscriptions tab) " +
+        "and the settings gear (You tab) in the top bar.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
 
@@ -150,6 +160,19 @@ val addMissingResourcesPatch = resourcePatch(
                 ResourceGroup("drawable", "ic_waveform_elements.xml"),
             )
         }
+
+        // endregion
+
+        // region settings
+
+        // Switches of the top bar buttons (TopBarButtonsPatch.java).
+        ResourceHelper.addSettings2(
+            this,
+            "PREFERENCE_CATEGORY: REVANCED_SETTINGS",
+            "PREFERENCE: LAYOUT_SETTINGS",
+            "PREFERENCE_HEADER: GENERAL",
+            "SETTINGS: TOP_BAR_BUTTONS"
+        )
 
         // endregion
 

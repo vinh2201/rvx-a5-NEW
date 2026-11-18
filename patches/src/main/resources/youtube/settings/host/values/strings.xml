@@ -487,6 +487,14 @@ Since these setting is quite outdated, it may not be valid"</string>
     <string name="revanced_switching_create_notification_summary_off">Create button and notification button not switched</string>
     <string name="revanced_switching_create_notification_summary_on">Create button and notification button are switched</string>
     <string name="revanced_switching_create_notification_title">Switch the create button and notification button</string>
+    <string name="revanced_top_bar_subscriptions_button_title">Subscriptions button in the top bar</string>
+    <string name="revanced_top_bar_subscriptions_button_summary_on">"A button left of the notification button opens the list of subscribed channels (only on the Subscriptions tab)"</string>
+    <string name="revanced_top_bar_subscriptions_button_summary_off">No subscriptions button in the top bar</string>
+    <string name="revanced_top_bar_subscriptions_button_description">All subscriptions</string>
+    <string name="revanced_top_bar_settings_button_title">Settings button in the top bar</string>
+    <string name="revanced_top_bar_settings_button_summary_on">"A gear button left of the notification button opens the settings (only on the You tab)"</string>
+    <string name="revanced_top_bar_settings_button_summary_off">No settings button in the top bar</string>
+    <string name="revanced_top_bar_settings_button_description">Settings</string>
     <string name="revanced_tool_used">tool used</string>
     <string name="revanced_video_ads_removal_summary_off">Video ads are shown</string>
     <string name="revanced_video_ads_removal_summary_on">Video ads are hidden</string>

@@ -64,6 +64,10 @@
         <!-- SETTINGS: SWITCH_CREATE_NOTIFICATION
         <SwitchPreference android:title="@string/revanced_switching_create_notification_title" android:key="revanced_switching_create_notification" android:defaultValue="false" android:summaryOn="@string/revanced_switching_create_notification_summary_on" android:summaryOff="@string/revanced_switching_create_notification_summary_off" />SETTINGS: SWITCH_CREATE_NOTIFICATION -->
 
+        <!-- SETTINGS: TOP_BAR_BUTTONS
+        <SwitchPreference android:title="@string/revanced_top_bar_subscriptions_button_title" android:key="revanced_top_bar_subscriptions_button" android:defaultValue="true" android:summaryOn="@string/revanced_top_bar_subscriptions_button_summary_on" android:summaryOff="@string/revanced_top_bar_subscriptions_button_summary_off" />
+        <SwitchPreference android:title="@string/revanced_top_bar_settings_button_title" android:key="revanced_top_bar_settings_button" android:defaultValue="true" android:summaryOn="@string/revanced_top_bar_settings_button_summary_on" android:summaryOff="@string/revanced_top_bar_settings_button_summary_off" />SETTINGS: TOP_BAR_BUTTONS -->
+
         <!-- SETTINGS: HIDE_CREATE_BUTTON
         <SwitchPreference android:title="@string/revanced_hide_create_button_title" android:key="revanced_hide_create_button" android:defaultValue="true" android:summaryOn="@string/revanced_hide_create_button_summary_on" android:summaryOff="@string/revanced_hide_create_button_summary_off" />SETTINGS: HIDE_CREATE_BUTTON -->
 

@@ -36,6 +36,8 @@ public enum SettingsEnum {
 
     // Layout settings (General)
     SWITCH_CREATE_NOTIFICATION("revanced_switching_create_notification", false, ReturnType.BOOLEAN, true),
+    TOP_BAR_SUBSCRIPTIONS_BUTTON("revanced_top_bar_subscriptions_button", true, ReturnType.BOOLEAN),
+    TOP_BAR_SETTINGS_BUTTON("revanced_top_bar_settings_button", true, ReturnType.BOOLEAN),
     HIDE_CREATE_BUTTON("revanced_hide_create_button", true, ReturnType.BOOLEAN, true),
     HIDE_SHORTS_BUTTON("revanced_hide_shorts_button", true, ReturnType.BOOLEAN, true),
     HIDE_SHORTS_SHELF("revanced_hide_shorts_shelf", true, ReturnType.BOOLEAN),
