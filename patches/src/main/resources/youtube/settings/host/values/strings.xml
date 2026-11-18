@@ -640,6 +640,7 @@ Hint: Long press anywhere to open the menu"</string>
     <string name="revanced_spoof_client_shorts_title">Shorts, Clips</string>
     <string name="revanced_spoof_client_fallback_title">Unplayable video</string>
     <string name="revanced_spoof_client_options_entry_android_vr">Android VR</string>
+    <string name="revanced_spoof_client_options_entry_android_vr_a14">Android VR (Android 14)</string>
     <string name="revanced_spoof_client_options_entry_android_vr_1_43">Android VR 1.43 (no AV1)</string>
     <string name="revanced_spoof_client_options_entry_android_vr_pico">Android VR (Pico)</string>
     <string name="revanced_spoof_client_options_entry_android_xr">Android XR</string>
@@ -651,18 +652,22 @@ Hint: Long press anywhere to open the menu"</string>
     <string name="revanced_spoof_client_options_entry_android_reel_no_auth">Android (Shorts, logged out)</string>
     <string name="revanced_spoof_client_options_entry_visionos">visionOS</string>
     <string name="revanced_spoof_client_options_entry_visionos_1_02">visionOS 1.02</string>
+    <string name="revanced_spoof_client_options_entry_visionos_rvx">visionOS (rvx)</string>
+    <string name="revanced_spoof_client_options_entry_tv">TV (experimental)</string>
+    <string name="revanced_spoof_client_options_entry_tv_legacy">TV Legacy (experimental)</string>
+    <string name="revanced_spoof_client_options_entry_tv_simply">TV Simply (experimental)</string>
     <string name="revanced_spoof_client_live_user_agent_title">User agent of the client for live streams</string>
     <string name="revanced_spoof_client_live_user_agent_summary_on">"Live stream requests use the user agent of the spoofed client. Try turning it off if a live stream shows error 400."</string>
     <string name="revanced_spoof_client_live_user_agent_summary_off">Live stream requests use the user agent of the app.</string>
     <string name="revanced_spoof_client_shorts_as_video_title">Send Shorts like normal videos</string>
-    <string name="revanced_spoof_client_shorts_as_video_summary_on">"The Shorts parameters are removed from the request (the client of Shorts, Clips is still used). Try it if Shorts do not load."</string>
-    <string name="revanced_spoof_client_shorts_as_video_summary_off">The request of Shorts is sent unchanged.</string>
+    <string name="revanced_spoof_client_shorts_as_video_summary_on">"The Shorts parameters are removed from the request (the client of Shorts, Clips is still used). The official ReVanced never sends them. Turn it off if Shorts misbehave."</string>
+    <string name="revanced_spoof_client_shorts_as_video_summary_off">The request of Shorts is sent unchanged (with the Shorts parameters of the app).</string>
 
     <!-- PreferenceScreen: Miscellaneous, PreferenceCategory: Miscellaneous, PreferenceScreen: Spoof client, PreferenceCategory: About -->
     <string name="revanced_preference_category_spoof_client_about">About</string>
 
     <string name="revanced_spoof_client_use_android_vr_title">Android VR / Android XR</string>
-    <string name="revanced_spoof_client_use_android_vr_summary">"Spoof client to Android VR (Meta Quest 3 with 1.65 or 1.43 without AV1, PICO 4) or Android XR (Samsung Galaxy XR).
+    <string name="revanced_spoof_client_use_android_vr_summary">"Spoof client to Android VR (Meta Quest 3 with 1.65 on Android 12 like the official ReVanced, or on Android 14 like rvx; 1.43 without AV1; PICO 4) or Android XR (Samsung Galaxy XR).
 
 Side effects include:
 • The account is not sent with the request (logged out).
@@ -690,7 +695,7 @@ Side effects include:
 • Can take a long time to start playback.
 • The logged out variant does not send the account."</string>
     <string name="revanced_spoof_client_use_visionos_title">visionOS</string>
-    <string name="revanced_spoof_client_use_visionos_summary">"Spoof client to visionOS (internal YouTube client of an unreleased app, versions 1.03 and 1.02 without AV1).
+    <string name="revanced_spoof_client_use_visionos_summary">"Spoof client to visionOS (internal YouTube client of an unreleased app, versions 1.03 and 1.02 without AV1; the "rvx" entry uses the values of rvx / ReVanced).
 
 Side effects include:
 • The account is not sent with the request (logged out).
@@ -704,4 +709,10 @@ Side effects include:
 • No HDR video.
 • Audio track menu is missing.
 • Some live streams are not supported for playback."</string>
+    <string name="revanced_spoof_client_use_tv_title">TV (TVHTML5, experimental)</string>
+    <string name="revanced_spoof_client_use_tv_summary">"Spoof client to the TV web clients (TV, TV Legacy, TV Simply) of rvx / Morphe.
+
+Side effects include:
+• These clients need the player JavaScript to decrypt the streams (and may need a PoToken), which this app cannot do. Most videos will not play.
+• Only meant to test every possibility."</string>
 </resources>

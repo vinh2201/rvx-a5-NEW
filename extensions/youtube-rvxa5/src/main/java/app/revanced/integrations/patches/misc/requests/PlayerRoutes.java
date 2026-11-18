@@ -45,6 +45,11 @@ public final class PlayerRoutes {
      */
     private static final int CONNECTION_TIMEOUT_MILLISECONDS = 10 * 1000; // 10 Seconds.
 
+    private static final String USER_AGENT_TV_PS4 =
+            "Mozilla/5.0 (PS4; Leanback Shell) Gecko/20100101 Firefox/65.0 LeanbackShell/01.00.01.75 Sony PS4/ (PS4, , no, CH)";
+    private static final String USER_AGENT_TV_TIZEN =
+            "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/2.4.0 TV Safari/538.1";
+
     private PlayerRoutes() {
     }
 
@@ -133,12 +138,19 @@ public final class PlayerRoutes {
      */
     public enum ClientType {
         /**
-         * ReVanced v22 ANDROID_VR_1_61_48 ("Android VR 1.65").
+         * ReVanced v22 ANDROID_VR_1_61_48 ("Android VR 1.65"), the exact values of the official ReVanced (Android 12, SDK 32).
          * Video not playable: Kids, Paid, Movie, Private, Age-restricted. Can only be used when logged out.
          * AV1 codec available.
          * <a href="https://dumps.tadiphone.dev/dumps/oculus/eureka">Meta Quest 3</a>
          */
         ANDROID_VR(28, "ANDROID_VR",
+                "com.google.android.apps.youtube.vr.oculus", "1.65.10",
+                "Oculus", "Quest 3", "Android", "12", 32, "UP1A.231005.007.A1",
+                false),
+        /**
+         * rvx ANDROID_VR: same client and version as {@link #ANDROID_VR}, but the device reports Android 14 (SDK 34).
+         */
+        ANDROID_VR_A14(28, "ANDROID_VR",
                 "com.google.android.apps.youtube.vr.oculus", "1.65.10",
                 "Oculus", "Quest 3", "Android", "14", 34, "UP1A.231005.007.A1",
                 false),
@@ -229,6 +241,36 @@ public final class PlayerRoutes {
         VISIONOS_1_02(101, "VISIONOS", "1.02",
                 "Apple", "RealityDevice14,1", "visionOS", "26.6.1", 0,
                 "com.google.visionosyoutube/1.02 (RealityDevice14,1; U; CPU visionOS 26_6_1 like Mac OS X; en_US) gzip",
+                false),
+        /**
+         * rvx / ReVanced v22 VISIONOS: OS version 26.5.23O471 and the user agent of Safari.
+         */
+        VISIONOS_RVX(101, "VISIONOS", "1.03",
+                "Apple", "RealityDevice17,1", "visionOS", "26.5.23O471", 0,
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+                false),
+        /**
+         * Morphe TV_SABR / rvx TV (TVHTML5, game console). EXPERIMENTAL: this client needs the player JavaScript
+         * (signature / "n" parameter) and may need a PoToken, so most videos will not play. Livestreams: not playable.
+         */
+        TV(7, "TVHTML5", "7.20260707.07.00",
+                "Sony", "PS4", "PlayStation 4", "", 0,
+                USER_AGENT_TV_PS4,
+                false),
+        /**
+         * Morphe TV_DASH / rvx TV_LEGACY (TVHTML5 5.20150304, Samsung Tizen). EXPERIMENTAL: needs the player JavaScript.
+         * Morphe uses it for livestreams.
+         */
+        TV_LEGACY(7, "TVHTML5", "5.20150304",
+                "Samsung", "SmartTV", "Tizen", "2.4.0", 0,
+                USER_AGENT_TV_TIZEN,
+                false),
+        /**
+         * Morphe / rvx TV_SIMPLY (TVHTML5_SIMPLY). EXPERIMENTAL: needs the player JavaScript and a PoToken when logged out.
+         */
+        TV_SIMPLY(75, "TVHTML5_SIMPLY", "1.1",
+                "Sony", "PS4", "PlayStation 4", "", 0,
+                USER_AGENT_TV_PS4,
                 false);
 
         public final String friendlyName;
