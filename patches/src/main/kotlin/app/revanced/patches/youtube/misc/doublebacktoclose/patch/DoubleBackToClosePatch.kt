@@ -3,6 +3,7 @@ package app.revanced.patches.youtube.misc.doublebacktoclose.patch
 import app.revanced.com.android.tools.smali.dexlib2.mutable.MutableMethod
 import app.revanced.patcher.extensions.addInstruction
 import app.revanced.patcher.patch.bytecodePatch
+import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.patches.youtube.misc.doublebacktoclose.fingerprint.onBackPressedMethodMatch
 import app.revanced.patches.youtube.misc.doublebacktoclose.fingerprint.scrollPositionMethodMatch
 import app.revanced.patches.youtube.misc.doublebacktoclose.fingerprint.scrollTopMethodMatch
@@ -27,6 +28,9 @@ val doubleBackToClosePatch = bytecodePatch(
     description = "Double back to close (bytecode).",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
+
+    // The extension classes that are called by the hooks are merged by integrationsPatch.
+    dependsOn(integrationsPatch)
 
     apply {
         /*

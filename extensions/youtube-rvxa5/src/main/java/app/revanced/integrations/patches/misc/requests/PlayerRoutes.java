@@ -2,6 +2,8 @@ package app.revanced.integrations.patches.misc.requests;
 
 import static app.revanced.integrations.utils.StringRef.str;
 
+import android.os.Build;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -19,6 +21,7 @@ import app.revanced.integrations.requests.Route;
  * Client table: taken from ReVanced patches (v22) and Morphe (legacy), the values of rvx a6 were compared as well.
  * Only clients that return direct (non SABR, no PoToken, no JS player) DASH/progressive stream URLs are listed, since this old
  * app can play nothing else. Clients that stopped working were removed on purpose:
+ * The values of "Android VR", "Android Studio", "visionOS" and "Android No SDK" were compared with rvx (inotia00).
  * <ul>
  *     <li>IOS (19.20.2): needs a PoToken now / returns SABR streams only. Removed.</li>
  *     <li>ANDROID_TESTSUITE (1.9), ANDROID, ANDROID_EMBEDDED_PLAYER, WEB, TVHTML5_SIMPLY_EMBEDDED_PLAYER: removed
@@ -123,6 +126,10 @@ public final class PlayerRoutes {
     /**
      * Do not rename the constants: the names are stored in the settings and are used to build the name of the string
      * resource of the entry ({@code revanced_spoof_client_options_entry_<name in lower case>}).
+     *
+     * <p>
+     * Fields that are {@code null} (or {@code sdk < 0}) mean "use the value of the real device": the request keeps what the
+     * app itself would send. {@code sdk == 0} means "not applicable" (non Android client).
      */
     public enum ClientType {
         /**
@@ -133,7 +140,7 @@ public final class PlayerRoutes {
          */
         ANDROID_VR(28, "ANDROID_VR",
                 "com.google.android.apps.youtube.vr.oculus", "1.65.10",
-                "Oculus", "Quest 3", "Android", "12", 32, "UP1A.231005.007.A1",
+                "Oculus", "Quest 3", "Android", "14", 34, "UP1A.231005.007.A1",
                 false),
         /**
          * ReVanced v22 ANDROID_VR_1_43_32.
@@ -160,7 +167,7 @@ public final class PlayerRoutes {
                 false),
         /**
          * ReVanced v22 / Morphe ANDROID_CREATOR ("Android Studio").
-         * Cannot play livestreams and lacks HDR, but can play videos with music and labeled "for children".
+         * Cannot play livestreams (HLS only) and lacks HDR, but can play videos with music and labeled "for children".
          * Requires login.
          */
         ANDROID_CREATOR(14, "ANDROID_CREATOR",
@@ -174,17 +181,73 @@ public final class PlayerRoutes {
         ANDROID_UNPLUGGED(29, "ANDROID_UNPLUGGED",
                 "com.google.android.apps.youtube.unplugged", "10.30.1",
                 "Google", "Google TV Streamer", "Android", "14", 34, "UTTK.241210.003",
-                true);
+                true),
+        /**
+         * rvx ANDROID_NO_SDK ("Android No SDK"): the default client of rvx. The Android client (id 3) with a recent version,
+         * without device make/model and without Android SDK version (the field is sent as 0).
+         * Video not playable: none. Logged out. The best candidate for livestreams.
+         */
+        ANDROID_NO_SDK(3, "ANDROID",
+                "com.google.android.youtube", "20.26.46",
+                "", "", "Android", null, 0, null,
+                false),
+        /**
+         * Same as {@link #ANDROID_NO_SDK}, but the account of the app is sent (age-restricted videos).
+         */
+        ANDROID_NO_SDK_AUTH(3, "ANDROID",
+                "com.google.android.youtube", "20.26.46",
+                "", "", "Android", null, 0, null,
+                true),
+        /**
+         * ReVanced v22 ANDROID_REEL: the plain Android client (the one this app is) reporting a recent version.
+         * The device values of the real device are kept. Logged in. Meant for Shorts.
+         * Video not playable: Paid, Movie, Private, Age-restricted.
+         */
+        ANDROID_REEL(3, "ANDROID",
+                "com.google.android.youtube", "20.26.46",
+                null, null, "Android", null, -1, Build.ID,
+                true),
+        /**
+         * ReVanced v22 ANDROID_REEL_NO_AUTH: same as {@link #ANDROID_REEL}, but without the account.
+         */
+        ANDROID_REEL_NO_AUTH(3, "ANDROID",
+                "com.google.android.youtube", "20.26.46",
+                null, null, "Android", null, -1, Build.ID,
+                false),
+        /**
+         * Morphe VISIONOS_1_03 (internal YouTube client of an unreleased visionOS app, ReVanced v22 "visionOS").
+         * Apple client: the OS name is sent as "visionOS" and no Android SDK version is sent.
+         * Logged out. Video not playable: Kids, Paid, Movie, Private, Age-restricted. May stop working at any time.
+         */
+        VISIONOS(101, "VISIONOS", "1.03",
+                "Apple", "RealityDevice17,1", "visionOS", "26.6.1", 0,
+                "com.google.visionosyoutube/1.03 (RealityDevice17,1; U; CPU visionOS 26_6_1 like Mac OS X; en_US) gzip",
+                false),
+        /**
+         * Morphe VISIONOS_1_02: older visionOS app version (no AV1).
+         */
+        VISIONOS_1_02(101, "VISIONOS", "1.02",
+                "Apple", "RealityDevice14,1", "visionOS", "26.6.1", 0,
+                "com.google.visionosyoutube/1.02 (RealityDevice14,1; U; CPU visionOS 26_6_1 like Mac OS X; en_US) gzip",
+                false);
 
         public final String friendlyName;
         public final int id;
         public final String clientName;
         public final String version;
+        /**
+         * Device make, model and OS version. null = use the value of the real device.
+         */
         public final String make;
         public final String model;
         public final String osVersion;
         /**
-         * Android SDK version.
+         * OS name. null = keep the OS name of the real device.
+         */
+        public final String osName;
+        /**
+         * Android SDK version. -1 = use the value of the real device, 0 = not applicable (the field is sent as 0 / omitted
+         * in the live stream request).
          */
         public final int sdk;
         public final String innerTubeBody;
@@ -194,9 +257,28 @@ public final class PlayerRoutes {
          */
         public final boolean useAuth;
 
+        /**
+         * Android client.
+         */
         ClientType(int id, String clientName, String packageName, String version,
                    String make, String model, String osName, String osVersion, int sdk, String buildId,
                    boolean useAuth) {
+            this(id, clientName, version, make, model, osName, osVersion, sdk,
+                    buildId == null
+                            ? packageName + "/" + version + " (Linux; U; Android "
+                            + (osVersion != null ? osVersion : Build.VERSION.RELEASE) + ") gzip"
+                            : createAndroidUserAgent(packageName, version,
+                            osVersion != null ? osVersion : Build.VERSION.RELEASE,
+                            model != null ? model : Build.MODEL, buildId),
+                    useAuth);
+        }
+
+        /**
+         * Any client with a ready user agent.
+         */
+        ClientType(int id, String clientName, String version,
+                   String make, String model, String osName, String osVersion, int sdk,
+                   String userAgent, boolean useAuth) {
             this.friendlyName = str("revanced_spoof_client_options_entry_" + name().toLowerCase(Locale.ENGLISH));
             this.id = id;
             this.clientName = clientName;
@@ -204,9 +286,15 @@ public final class PlayerRoutes {
             this.make = make;
             this.model = model;
             this.osVersion = osVersion;
+            this.osName = osName;
             this.sdk = sdk;
-            this.innerTubeBody = createInnerTubeBody(clientName, version, make, model, osName, osVersion, sdk);
-            this.userAgent = createAndroidUserAgent(packageName, version, osVersion, model, buildId);
+            this.innerTubeBody = createInnerTubeBody(clientName, version,
+                    make != null ? make : Build.MANUFACTURER,
+                    model != null ? model : Build.MODEL,
+                    osName != null ? osName : "Android",
+                    osVersion != null ? osVersion : Build.VERSION.RELEASE,
+                    sdk < 0 ? Build.VERSION.SDK_INT : sdk);
+            this.userAgent = userAgent;
             this.useAuth = useAuth;
         }
     }

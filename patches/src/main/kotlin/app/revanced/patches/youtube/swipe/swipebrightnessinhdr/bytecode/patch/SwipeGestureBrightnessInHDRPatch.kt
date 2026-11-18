@@ -4,6 +4,7 @@ import app.revanced.patcher.extensions.ExternalLabel
 import app.revanced.patcher.extensions.addInstructionsWithLabels
 import app.revanced.patcher.extensions.getInstruction
 import app.revanced.patcher.patch.bytecodePatch
+import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.patches.youtube.swipe.swipebrightnessinhdr.bytecode.fingerprints.hdrVideoMethodMatch
 import app.revanced.shared.util.integrations.Constants.SWIPE_PATH
 
@@ -12,6 +13,9 @@ val swipeGestureBrightnessInHDRPatch = bytecodePatch(
     description = "Enables the brightness swipe gesture in HDR videos.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
+
+    // The extension classes that are called by the hooks are merged by integrationsPatch.
+    dependsOn(integrationsPatch)
 
     apply {
         hdrVideoMethodMatch.method.let {

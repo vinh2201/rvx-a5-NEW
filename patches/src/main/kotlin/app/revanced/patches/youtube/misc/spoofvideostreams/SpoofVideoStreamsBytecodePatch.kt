@@ -23,6 +23,7 @@ import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.playerPa
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.setPlayerRequestClientTypeMethodMatch
 import app.revanced.shared.util.integrations.Constants.MISC_PATH
 import app.revanced.util.indexOfFirstInstructionOrThrow
+import app.revanced.util.indexOfFirstInstructionReversedOrThrow
 import app.revanced.util.findInstructionIndicesReversedOrThrow
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
@@ -75,6 +76,7 @@ private class ClientInfoFields(
     val clientMakeField: FieldReference,
     val clientOsVersionField: FieldReference,
     val clientSdkField: FieldReference,
+    val clientOsNameField: FieldReference,
 )
 
 // Old name: spoof-client-bytecode-patch (helper patch, never selectable).
@@ -210,6 +212,17 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
                             indexOfBuildFieldGet("Landroid/os/Build\$VERSION;", "SDK_INT"),
                             clientInfoClass,
                         ),
+                        // The OS name ("Android") is not read from android.os.Build, it comes from a field of the
+                        // request builder. It is the client info field that is set right before Build.MANUFACTURER is
+                        // read (SDK_INT -> osName -> MANUFACTURER -> BRAND -> MODEL).
+                        clientOsNameField = run {
+                            val manufacturerIndex = indexOfBuildFieldGet("Landroid/os/Build;", "MANUFACTURER")
+                            val osNameSetIndex = indexOfFirstInstructionReversedOrThrow(manufacturerIndex - 1) {
+                                opcode == Opcode.IPUT_OBJECT && fieldReference?.definingClass == clientInfoClass
+                            }
+                            getInstruction(osNameSetIndex).fieldReference
+                                ?: throw PatchException("Could not find clientOsNameField")
+                        },
                     )
                 }
             }
@@ -222,6 +235,7 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
         val clientMakeField = clientInfo.clientMakeField
         val clientOsVersionField = clientInfo.clientOsVersionField
         val clientSdkField = clientInfo.clientSdkField
+        val clientOsNameField = clientInfo.clientOsNameField
 
         // endregion
 
@@ -292,6 +306,12 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
                             invoke-static { v1 }, $EXTENSION_CLASS_DESCRIPTOR->getClientOsVersion(Ljava/lang/String;)Ljava/lang/String;
                             move-result-object v1
                             iput-object v1, v0, $clientOsVersionField
+
+                            # OS name (only the Apple clients change it).
+                            iget-object v1, v0, $clientOsNameField
+                            invoke-static { v1 }, $EXTENSION_CLASS_DESCRIPTOR->getClientOsName(Ljava/lang/String;)Ljava/lang/String;
+                            move-result-object v1
+                            iput-object v1, v0, $clientOsNameField
 
                             # Android SDK version.
                             iget v1, v0, $clientSdkField

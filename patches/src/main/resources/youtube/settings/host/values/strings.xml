@@ -634,6 +634,7 @@ Hint: Long press anywhere to open the menu"</string>
 
     <!-- PreferenceScreen: Miscellaneous, PreferenceCategory: Miscellaneous, PreferenceScreen: Spoof client, PreferenceCategory: Spoof client options -->
     <string name="revanced_preference_category_spoof_client_options">Spoof client options</string>
+    <string name="revanced_preference_category_spoof_client_experiments">Experiments (videos that do not play)</string>
     <string name="revanced_spoof_client_general_title">General</string>
     <string name="revanced_spoof_client_livestream_title">Live streams</string>
     <string name="revanced_spoof_client_shorts_title">Shorts, Clips</string>
@@ -644,6 +645,18 @@ Hint: Long press anywhere to open the menu"</string>
     <string name="revanced_spoof_client_options_entry_android_xr">Android XR</string>
     <string name="revanced_spoof_client_options_entry_android_creator">Android Studio</string>
     <string name="revanced_spoof_client_options_entry_android_unplugged">Android TV</string>
+    <string name="revanced_spoof_client_options_entry_android_no_sdk">Android No SDK</string>
+    <string name="revanced_spoof_client_options_entry_android_no_sdk_auth">Android No SDK (logged in)</string>
+    <string name="revanced_spoof_client_options_entry_android_reel">Android (Shorts)</string>
+    <string name="revanced_spoof_client_options_entry_android_reel_no_auth">Android (Shorts, logged out)</string>
+    <string name="revanced_spoof_client_options_entry_visionos">visionOS</string>
+    <string name="revanced_spoof_client_options_entry_visionos_1_02">visionOS 1.02</string>
+    <string name="revanced_spoof_client_live_user_agent_title">User agent of the client for live streams</string>
+    <string name="revanced_spoof_client_live_user_agent_summary_on">"Live stream requests use the user agent of the spoofed client. Try turning it off if a live stream shows error 400."</string>
+    <string name="revanced_spoof_client_live_user_agent_summary_off">Live stream requests use the user agent of the app.</string>
+    <string name="revanced_spoof_client_shorts_as_video_title">Send Shorts like normal videos</string>
+    <string name="revanced_spoof_client_shorts_as_video_summary_on">"The Shorts parameters are removed from the request (the client of Shorts, Clips is still used). Try it if Shorts do not load."</string>
+    <string name="revanced_spoof_client_shorts_as_video_summary_off">The request of Shorts is sent unchanged.</string>
 
     <!-- PreferenceScreen: Miscellaneous, PreferenceCategory: Miscellaneous, PreferenceScreen: Spoof client, PreferenceCategory: About -->
     <string name="revanced_preference_category_spoof_client_about">About</string>
@@ -662,6 +675,27 @@ Side effects include:
 • You must be logged in.
 • Live streams cannot play.
 • No HDR video."</string>
+    <string name="revanced_spoof_client_use_android_no_sdk_title">Android No SDK</string>
+    <string name="revanced_spoof_client_use_android_no_sdk_summary">"Spoof client to the Android client (id 3) with a recent version (20.26.46), without device model and without Android SDK version. This is the default client of rvx.
+
+Side effects include:
+• Best chance to play livestreams.
+• The logged out variant does not send the account; the logged in variant does (age-restricted videos).
+• May stop working at any time."</string>
+    <string name="revanced_spoof_client_use_android_reel_title">Android (Shorts)</string>
+    <string name="revanced_spoof_client_use_android_reel_summary">"Spoof client to the Android client with a recent version (20.26.46). The device values of this phone are kept.
+
+Side effects include:
+• Paid, movie, private and age-restricted videos do not playback.
+• Can take a long time to start playback.
+• The logged out variant does not send the account."</string>
+    <string name="revanced_spoof_client_use_visionos_title">visionOS</string>
+    <string name="revanced_spoof_client_use_visionos_summary">"Spoof client to visionOS (internal YouTube client of an unreleased app, versions 1.03 and 1.02 without AV1).
+
+Side effects include:
+• The account is not sent with the request (logged out).
+• Kids, paid, private and age-restricted videos do not playback.
+• May stop working at any time."</string>
     <string name="revanced_spoof_client_use_android_tv_title">Android TV</string>
     <string name="revanced_spoof_client_use_android_tv_summary">"Spoof client to Android TV (YouTube TV).
 

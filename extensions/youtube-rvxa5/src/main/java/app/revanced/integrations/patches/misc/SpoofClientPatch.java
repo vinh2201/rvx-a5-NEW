@@ -18,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes.ClientType;
 import app.revanced.integrations.settings.SettingsEnum;
+import app.revanced.integrations.utils.LogHelper;
 
 /**
  * @noinspection ALL
@@ -46,6 +47,11 @@ public class SpoofClientPatch {
      * Last spoofed client type.
      */
     private static volatile ClientType lastSpoofedClientType;
+
+    /**
+     * Whether the last player request was made for a live stream (used for the headers of the stream requests).
+     */
+    private static volatile boolean lastRequestWasLive;
 
     /**
      * Last video id loaded. Used to prevent reloading the same spec multiple times.
@@ -110,23 +116,54 @@ public class SpoofClientPatch {
     }
 
     private static ClientType getSpoofClientType() {
-            if (isShortsOrClips) {
-                lastSpoofedClientType = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_SHORTS);
-                return lastSpoofedClientType;
-            }
+        boolean live = false;
+        ClientType type;
+        String reason;
+
+        if (isShortsOrClips) {
+            type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_SHORTS);
+            reason = "shorts";
+        } else {
             LiveStreamRenderer renderer = getRenderer(false);
-            if (renderer != null) {
-                if (renderer.isLive) {
-                    lastSpoofedClientType = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_LIVESTREAM);
-                    return lastSpoofedClientType;
-                }
-                if (!renderer.playabilityOk) {
-                    lastSpoofedClientType = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_FALLBACK);
-                    return lastSpoofedClientType;
-                }
+            if (renderer != null && renderer.isLive) {
+                type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_LIVESTREAM);
+                live = true;
+                reason = "live";
+            } else if (renderer != null && !renderer.playabilityOk) {
+                type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_FALLBACK);
+                reason = "unplayable";
+            } else {
+                type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_GENERAL);
+                reason = renderer == null ? "general (renderer unknown)" : "general";
             }
-            lastSpoofedClientType = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_GENERAL);
-            return lastSpoofedClientType;
+        }
+
+        lastRequestWasLive = live;
+        lastSpoofedClientType = type;
+        logClientChoice(type, reason);
+        return type;
+    }
+
+    /**
+     * Logs the client used for a video once per change (logcat tag "revanced"), so a failing video can be traced.
+     */
+    private static volatile String lastLoggedChoice = "";
+
+    /**
+     * Video id of the last player request (for the log only).
+     */
+    private static volatile String currentVideoId = "";
+
+    private static void logClientChoice(ClientType type, String reason) {
+        try {
+            String choice = currentVideoId + "|" + type.name() + "|" + reason;
+            if (!choice.equals(lastLoggedChoice)) {
+                lastLoggedChoice = choice;
+                LogHelper.info(SpoofClientPatch.class, "Spoof client: " + type.name() + " (" + reason + ") video="
+                        + currentVideoId + " id=" + type.id + " version=" + type.version);
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     /**
@@ -156,7 +193,8 @@ public class SpoofClientPatch {
      */
     public static String getClientModel(String originalClientModel) {
         if (SPOOF_CLIENT_ENABLED) {
-            return getSpoofClientType().model;
+            String model = getSpoofClientType().model;
+            return model != null ? model : originalClientModel;
         }
 
         return originalClientModel;
@@ -167,7 +205,8 @@ public class SpoofClientPatch {
      */
     public static String getClientDeviceMake(String originalClientDeviceMake) {
         if (SPOOF_CLIENT_ENABLED) {
-            return getSpoofClientType().make;
+            String make = getSpoofClientType().make;
+            return make != null ? make : originalClientDeviceMake;
         }
 
         return originalClientDeviceMake;
@@ -178,7 +217,8 @@ public class SpoofClientPatch {
      */
     public static String getClientOsVersion(String originalClientOsVersion) {
         if (SPOOF_CLIENT_ENABLED) {
-            return getSpoofClientType().osVersion;
+            String osVersion = getSpoofClientType().osVersion;
+            return osVersion != null ? osVersion : originalClientOsVersion;
         }
 
         return originalClientOsVersion;
@@ -190,12 +230,27 @@ public class SpoofClientPatch {
     public static int getClientAndroidSdkVersion(int originalClientAndroidSdkVersion) {
         if (SPOOF_CLIENT_ENABLED) {
             int sdk = getSpoofClientType().sdk;
-            if (sdk > 0) {
-                return sdk;
+            if (sdk >= 0) {
+                return sdk; // 0 = not applicable (Apple clients).
             }
         }
 
         return originalClientAndroidSdkVersion;
+    }
+
+    /**
+     * Injection point.
+     * The OS name of the client (only the Apple clients change it).
+     */
+    public static String getClientOsName(String originalClientOsName) {
+        if (SPOOF_CLIENT_ENABLED) {
+            String osName = getSpoofClientType().osName;
+            if (osName != null && !osName.equals("Android")) {
+                return osName;
+            }
+        }
+
+        return originalClientOsName;
     }
 
     /**
@@ -210,6 +265,19 @@ public class SpoofClientPatch {
         }
 
         try {
+            String host = uri.getHost();
+            if (host != null && host.endsWith("googlevideo.com")) {
+                // Requests of the streams (segments, HLS/DASH manifests). The stream URLs of a client carry its name
+                // ("c=<client>"). For live streams the server can refuse them when the user agent is not the one of
+                // that client (HTTP 400), so the user agent of the client is used there when the setting is on.
+                ClientType last = lastSpoofedClientType;
+                if (lastRequestWasLive && last != null && last.userAgent != null
+                        && SettingsEnum.SPOOF_CLIENT_LIVE_USER_AGENT.getBoolean()) {
+                    putHeader(headers, "User-Agent", last.userAgent);
+                }
+                return;
+            }
+
             String path = uri.getPath();
             if (path == null || !path.endsWith("/youtubei/v1/player")) {
                 return;
@@ -301,8 +369,15 @@ public class SpoofClientPatch {
      */
     public static String setPlayerResponseVideoId(@NonNull String videoId, @Nullable String parameters) {
         if (SPOOF_CLIENT_ENABLED) {
+            currentVideoId = videoId;
             isShortsOrClips = parameters != null &&
                     (parameters.startsWith(CLIP_PARAMETER_PREFIX) || parameters.startsWith(SHORTS_PARAMETER_PREFIX));
+
+            if (isShortsOrClips && SettingsEnum.SPOOF_CLIENT_SHORTS_AS_VIDEO.getBoolean()) {
+                // The Shorts parameters make some clients answer with an error or without streams. The request is
+                // sent like the one of a normal video (the client of the Shorts setting is still used).
+                return "";
+            }
 
             if (!isShortsOrClips) {
                 ClientType generalClientType = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_GENERAL);

@@ -1,12 +1,17 @@
 package app.revanced.patches.youtube.misc.layoutupdates
 
+import app.revanced.patcher.extensions.ExternalLabel
 import app.revanced.patcher.extensions.addInstructions
+import app.revanced.patcher.extensions.addInstructionsWithLabels
 import app.revanced.patcher.extensions.getInstruction
+import app.revanced.patcher.extensions.removeInstruction
 import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
+import app.revanced.patches.youtube.misc.layoutupdates.fingerprints.clientEventTypeConfigMethodMatch
 import app.revanced.patches.youtube.misc.layoutupdates.fingerprints.configLoadMethodMatch
 import app.revanced.patches.youtube.misc.layoutupdates.fingerprints.requestConfigInfoMethodMatch
 import app.revanced.shared.util.integrations.Constants.UTILS_PATH
+import app.revanced.util.indexOfFirstInstructionOrThrow
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
@@ -38,6 +43,36 @@ val layoutConfigGuardBytecodePatch = bytecodePatch(
     dependsOn(integrationsPatch)
 
     apply {
+        // Crash fix: an unknown client event type in the stored configuration must be skipped, not end the constructor.
+        clientEventTypeConfigMethodMatch.let { match ->
+            with(match.method) {
+                val returnIndex = match[-1]
+
+                // Head of the loop over the config entries (Iterator.hasNext()).
+                val loopHeadIndex = indexOfFirstInstructionOrThrow {
+                    opcode == Opcode.INVOKE_INTERFACE &&
+                        (this as ReferenceInstruction).reference.let {
+                            it is MethodReference &&
+                                it.definingClass == "Ljava/util/Iterator;" &&
+                                it.name == "hasNext"
+                        }
+                }
+
+                if (loopHeadIndex >= returnIndex) {
+                    throw IllegalStateException("Unexpected client event type config constructor")
+                }
+
+                addInstructionsWithLabels(
+                    returnIndex,
+                    "goto :next_entry",
+                    ExternalLabel("next_entry", getInstruction(loopHeadIndex)),
+                )
+
+                // The early return that is now unreachable.
+                removeInstruction(returnIndex + 1)
+            }
+        }
+
         // Request: the stored configuration is not sent when it is ignored or "Disable layout updates" is on.
         requestConfigInfoMethodMatch.method.apply {
             // The first three TextUtils.isEmpty() calls check the three values of the config info:

@@ -17,6 +17,7 @@ import java.util.Objects;
 import app.revanced.integrations.patches.misc.LiveStreamRenderer;
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes.ClientType;
 import app.revanced.integrations.requests.Requester;
+import app.revanced.integrations.utils.LogHelper;
 import app.revanced.integrations.utils.ReVancedUtils;
 
 public class LiveStreamRendererRequester {
@@ -25,7 +26,8 @@ public class LiveStreamRendererRequester {
     }
 
     private static void handleConnectionError(@NonNull String toastMessage, @Nullable Exception ex) {
-        // Logger.printInfo(() -> toastMessage, ex);
+        // Only written to the log (tag "revanced"): the failure of this check is not shown to the user.
+        LogHelper.info(LiveStreamRendererRequester.class, toastMessage);
     }
 
     @Nullable
@@ -45,7 +47,7 @@ public class LiveStreamRendererRequester {
             if (responseCode == 200) return Requester.parseJSONObject(connection);
 
             // Always show a toast for this, as a non 200 response means something is broken.
-            handleConnectionError("Fetch livestreams not available: " + responseCode, null);
+            handleConnectionError("Fetch livestreams not available: HTTP " + responseCode + " (" + clientType.name() + ")", null);
             connection.disconnect();
         } catch (SocketTimeoutException ex) {
             handleConnectionError("Fetch livestreams temporarily not available (API timed out)", ex);

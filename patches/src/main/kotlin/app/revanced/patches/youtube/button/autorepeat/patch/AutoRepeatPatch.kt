@@ -5,6 +5,7 @@ import app.revanced.patcher.extensions.addInstructions
 import app.revanced.patcher.extensions.addInstructionsWithLabels
 import app.revanced.patcher.extensions.getInstruction
 import app.revanced.patcher.patch.bytecodePatch
+import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.patches.youtube.button.autorepeat.fingerprints.autoNavInformerMethodMatch
 import app.revanced.patches.youtube.button.autorepeat.fingerprints.autoRepeatMethodMatch
 import app.revanced.patches.youtube.button.autorepeat.fingerprints.autoRepeatParentMethodMatch
@@ -16,6 +17,9 @@ val autoRepeatPatch = bytecodePatch(
     description = "Hooks the auto repeat of the video player.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
+
+    // The extension classes that are called by the hooks are merged by integrationsPatch.
+    dependsOn(integrationsPatch)
 
     apply {
         autoRepeatParentMethodMatch.immutableClassDef.autoRepeatMethodMatch.method.let {
