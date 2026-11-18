@@ -11,8 +11,11 @@ import android.net.Uri;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import app.revanced.integrations.settings.SettingsEnum;
 import app.revanced.integrations.utils.LogHelper;
@@ -29,6 +32,9 @@ import app.revanced.integrations.utils.ResourceUtils;
  * <p>
  * Injection points: {@link #onPivotTabSelected(String)}, {@link #onPaneChanged(boolean)} and
  * {@link #onMenuPopulated(Menu, int)}.
+ * <p>
+ * The settings button opens the settings activity of the app through its shell activity (it adds the account). The shell
+ * activity gets a transparent theme from the "Add missing resources" patch, so no black window shows up before the settings.
  */
 @SuppressWarnings("unused")
 public class TopBarButtonsPatch {
@@ -60,8 +66,12 @@ public class TopBarButtonsPatch {
      */
     private static boolean atTabRoot = true;
 
-    private static WeakReference<Menu> lastMenu = new WeakReference<>(null);
-    private static int lastColor;
+    /**
+     * Every pane (Home, Subscriptions, You ...) has its own top bar with its own menu, and the app keeps the panes of the
+     * tabs alive: a menu is filled once and is not filled again when its tab is selected again. So the buttons are updated in
+     * all menus that were filled (menu -> color of the icons). The menus are weak keys, they go away with their top bar.
+     */
+    private static final Map<Menu, Integer> menus = new WeakHashMap<>();
 
     /**
      * Injection point. A tab of the bottom bar got selected.
@@ -71,11 +81,13 @@ public class TopBarButtonsPatch {
     public static void onPivotTabSelected(String tabId) {
         try {
             String newTabId = tabId == null ? "" : tabId;
-            if (newTabId.equals(selectedTabId)) return;
+            // Selecting (or selecting again) a tab shows the first page of that tab.
+            boolean changed = !newTabId.equals(selectedTabId) || !atTabRoot;
 
             LogHelper.info(TopBarButtonsPatch.class, "Pivot tab selected: " + newTabId);
             selectedTabId = newTabId;
-            refreshLastMenu();
+            atTabRoot = true;
+            if (changed) refreshAllMenus();
         } catch (Exception ex) {
             LogHelper.printException(TopBarButtonsPatch.class, "onPivotTabSelected failure", ex);
         }
@@ -92,14 +104,14 @@ public class TopBarButtonsPatch {
 
             LogHelper.info(TopBarButtonsPatch.class, "Page is the root of a tab: " + isTabRoot);
             atTabRoot = isTabRoot;
-            refreshLastMenu();
+            refreshAllMenus();
         } catch (Exception ex) {
             LogHelper.printException(TopBarButtonsPatch.class, "onPaneChanged failure", ex);
         }
     }
 
     /**
-     * Injection point. The menu of the top bar was filled with the buttons of the app.
+     * Injection point. The menu of a top bar was filled with the buttons of the app.
      *
      * @param menu      the menu of the top bar.
      * @param iconColor the color of the icons of the top bar.
@@ -108,17 +120,36 @@ public class TopBarButtonsPatch {
         try {
             if (menu == null) return;
 
-            lastMenu = new WeakReference<>(menu);
-            lastColor = iconColor;
+            synchronized (menus) {
+                menus.put(menu, iconColor);
+            }
             updateMenu(menu, iconColor);
         } catch (Exception ex) {
             LogHelper.printException(TopBarButtonsPatch.class, "onMenuPopulated failure", ex);
         }
     }
 
-    private static void refreshLastMenu() {
-        Menu menu = lastMenu.get();
-        if (menu != null) updateMenu(menu, lastColor);
+    private static void refreshAllMenus() {
+        List<Menu> toUpdate = new ArrayList<>();
+        List<Integer> colors = new ArrayList<>();
+
+        synchronized (menus) {
+            for (Map.Entry<Menu, Integer> entry : menus.entrySet()) {
+                Menu menu = entry.getKey();
+                if (menu == null) continue;
+
+                toUpdate.add(menu);
+                colors.add(entry.getValue());
+            }
+        }
+
+        for (int i = 0, size = toUpdate.size(); i < size; i++) {
+            try {
+                updateMenu(toUpdate.get(i), colors.get(i));
+            } catch (Exception ex) {
+                LogHelper.printException(TopBarButtonsPatch.class, "Menu update failure", ex);
+            }
+        }
     }
 
     private static Tab getCurrentTab() {
@@ -213,7 +244,7 @@ public class TopBarButtonsPatch {
         Context context = ReVancedUtils.getContext();
         if (context == null) return;
 
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
         context.startActivity(intent);
     }
 

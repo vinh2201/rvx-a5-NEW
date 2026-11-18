@@ -6,6 +6,8 @@ import app.revanced.shared.util.resources.ResourceHelper
 import app.revanced.shared.util.resources.ResourceUtils.ResourceGroup
 import app.revanced.shared.util.resources.ResourceUtils.copyResources
 
+private const val SETTINGS_SHELL_ACTIVITY = "com.google.android.apps.youtube.app.application.Shell_SettingsActivity"
+
 // Drawable alias -> candidate targets (the first target that exists in 16.40.36 is used; aliases without any existing
 // target are skipped, aliases whose name already exists are never replaced).
 //
@@ -159,6 +161,34 @@ val addMissingResourcesPatch = resourcePatch(
                 "youtube/addmissingresources",
                 ResourceGroup("drawable", "ic_waveform_elements.xml"),
             )
+        }
+
+        // endregion
+
+        // region transparent shell activity of the settings
+
+        // The settings button of the top bar (TopBarButtonsPatch.java) starts Shell_SettingsActivity, which only looks up
+        // the account and then starts the real settings screen. With its own theme (dark, with a title bar) a black window
+        // with the name of the app shows up before the settings, so it gets a transparent theme (same as the app does for
+        // its other shell activities, which use Theme.NoDisplay).
+        copyResources(
+            "youtube/addmissingresources",
+            ResourceGroup("values", "revanced_shell_transparent_theme.xml"),
+        )
+
+        document("AndroidManifest.xml").use { document ->
+            val activities = document.getElementsByTagName("activity")
+
+            for (i in 0 until activities.length) {
+                val attributes = activities.item(i).attributes ?: continue
+
+                if (attributes.getNamedItem("android:name")?.nodeValue != SETTINGS_SHELL_ACTIVITY) continue
+
+                val theme = attributes.getNamedItem("android:theme")
+                    ?: document.createAttribute("android:theme").also(attributes::setNamedItem)
+                theme.nodeValue = "@style/Theme.RvxA5.TransparentShell"
+                break
+            }
         }
 
         // endregion

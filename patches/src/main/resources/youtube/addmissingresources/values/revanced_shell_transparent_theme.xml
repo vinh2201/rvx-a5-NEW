@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Theme of the shell activity of the settings (Shell_SettingsActivity). The shell activity only looks up the account and
+        starts the real settings screen, but with its original theme (dark, with a title bar) a black window with the name of
+        the app shows up for a moment. This theme is transparent and has no title, so nothing is shown.
+        The parent is the original theme, everything else (attributes the app looks up) stays as it was.
+    -->
+    <style name="Theme.RvxA5.TransparentShell" parent="@style/Theme.YouTube.Dark">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+</resources>
