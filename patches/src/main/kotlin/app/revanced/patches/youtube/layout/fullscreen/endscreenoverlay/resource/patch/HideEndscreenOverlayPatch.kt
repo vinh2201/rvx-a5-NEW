@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-endscreen-overlay (old class name: HideFilmStripPatch)
 val hideEndscreenOverlayPatch = resourcePatch(
-    name = "Hide endscreen overlay",
+    name = "Hide endscreen overlay (A5)",
     description = "Hide endscreen overlay on swipe controls.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

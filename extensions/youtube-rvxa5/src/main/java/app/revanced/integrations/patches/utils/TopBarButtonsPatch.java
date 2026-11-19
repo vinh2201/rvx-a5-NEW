@@ -2,6 +2,7 @@ package app.revanced.integrations.patches.utils;
 
 import static app.revanced.integrations.utils.StringRef.str;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -11,6 +12,8 @@ import android.net.Uri;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -30,11 +33,15 @@ import app.revanced.integrations.utils.ResourceUtils;
  * </ul>
  * The old UI of 16.40.36 does not show these buttons that the newer server layout sends.
  * <p>
- * Injection points: {@link #onPivotTabSelected(String)}, {@link #onPaneChanged(boolean)} and
- * {@link #onMenuPopulated(Menu, int)}.
+ * Injection points: {@link #onPivotTabSelected(String)}, {@link #onActionBarChanged(int)},
+ * {@link #onMenuPopulated(Menu, int)} and {@link #onSettingsMenuControllerCreated(Object)}.
  * <p>
- * The settings button opens the settings activity of the app through its shell activity (it adds the account). The shell
- * activity gets a transparent theme from the "Add missing resources" patch, so no black window shows up before the settings.
+ * The settings button opens the settings of the app the same way as the "Settings" entry of the overflow menu of the
+ * notification page does: the controller of that entry (it keeps the account, the activity and the callback that starts the
+ * settings screen) is captured when the app creates it, and the button calls it. The app opens the settings directly then, no
+ * extra window shows up. The app creates that controller only when a page with the normal overflow menu (notifications,
+ * for example) is shown, so until then (or when the activity of the controller is gone) the button falls back to the shell
+ * activity of the settings, which got a transparent theme from the "Add missing resources" patch.
  */
 @SuppressWarnings("unused")
 public class TopBarButtonsPatch {
@@ -49,6 +56,11 @@ public class TopBarButtonsPatch {
     private static final int ORDER_FIRST = 0x50000;
 
     private static final String CHANNELS_URL = "https://m.youtube.com/feed/channels";
+    /**
+     * Name of the method that "Add missing resources" adds to the controller of the "Settings" entry of the app
+     * (it calls the method of the app that opens the settings, whatever its obfuscated name is).
+     */
+    private static final String OPEN_SETTINGS_METHOD = "rvxa5OpenSettings";
     private static final String SETTINGS_ACTIVITY = "com.google.android.apps.youtube.app.application.Shell_SettingsActivity";
 
     private enum Tab {
@@ -67,6 +79,11 @@ public class TopBarButtonsPatch {
     private static boolean atTabRoot = true;
 
     /**
+     * The controller of the "Settings" entry of the app (the newest one, the app creates a new one for every page that has it).
+     */
+    private static Object settingsMenuController;
+
+    /**
      * Every pane (Home, Subscriptions, You ...) has its own top bar with its own menu, and the app keeps the panes of the
      * tabs alive: a menu is filled once and is not filled again when its tab is selected again. So the buttons are updated in
      * all menus that were filled (menu -> color of the icons). The menus are weak keys, they go away with their top bar.
@@ -81,33 +98,43 @@ public class TopBarButtonsPatch {
     public static void onPivotTabSelected(String tabId) {
         try {
             String newTabId = tabId == null ? "" : tabId;
-            // Selecting (or selecting again) a tab shows the first page of that tab.
-            boolean changed = !newTabId.equals(selectedTabId) || !atTabRoot;
-
             LogHelper.info(TopBarButtonsPatch.class, "Pivot tab selected: " + newTabId);
+
+            if (newTabId.equals(selectedTabId)) return;
+
             selectedTabId = newTabId;
-            atTabRoot = true;
-            if (changed) refreshAllMenus();
+            refreshAllMenus();
         } catch (Exception ex) {
             LogHelper.printException(TopBarButtonsPatch.class, "onPivotTabSelected failure", ex);
         }
     }
 
     /**
-     * Injection point. The page that is shown changed.
+     * Injection point. The top bar got the configuration of a page (title, buttons, navigation icon ...).
      *
-     * @param isTabRoot true if the new page is the first page of a tab of the bottom bar.
+     * @param navigationMode 0 if the top bar has no navigation icon (first page of a tab of the bottom bar), 1 if it has the
+     *                       back arrow (every page that was opened from another page: notifications, channel, search ...).
      */
-    public static void onPaneChanged(boolean isTabRoot) {
+    public static void onActionBarChanged(int navigationMode) {
         try {
+            boolean isTabRoot = navigationMode == 0;
             if (isTabRoot == atTabRoot) return;
 
             LogHelper.info(TopBarButtonsPatch.class, "Page is the root of a tab: " + isTabRoot);
             atTabRoot = isTabRoot;
             refreshAllMenus();
         } catch (Exception ex) {
-            LogHelper.printException(TopBarButtonsPatch.class, "onPaneChanged failure", ex);
+            LogHelper.printException(TopBarButtonsPatch.class, "onActionBarChanged failure", ex);
         }
+    }
+
+    /**
+     * Injection point. The app created the controller of its "Settings" entry (overflow menu of a page).
+     *
+     * @param controller the controller, it has the method {@link #OPEN_SETTINGS_METHOD}.
+     */
+    public static void onSettingsMenuControllerCreated(Object controller) {
+        settingsMenuController = controller;
     }
 
     /**
@@ -259,11 +286,52 @@ public class TopBarButtonsPatch {
     }
 
     private static void openSettings() {
+        if (openSettingsWithController()) return;
+
         Context context = ReVancedUtils.getContext();
         if (context == null) return;
 
+        // Shell activity of the settings: it looks up the account and starts the settings (transparent theme).
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName(context.getPackageName(), SETTINGS_ACTIVITY);
         startActivity(intent);
+    }
+
+    /**
+     * Opens the settings with the controller of the "Settings" entry of the app.
+     *
+     * @return false if there is no usable controller (nothing was done then).
+     */
+    private static boolean openSettingsWithController() {
+        Object controller = settingsMenuController;
+        if (controller == null) return false;
+
+        try {
+            Activity activity = findActivity(controller);
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                // The controller belongs to an activity that is gone.
+                LogHelper.info(TopBarButtonsPatch.class, "Settings controller is stale");
+                settingsMenuController = null;
+                return false;
+            }
+
+            Method open = controller.getClass().getMethod(OPEN_SETTINGS_METHOD);
+            return Boolean.TRUE.equals(open.invoke(controller));
+        } catch (Exception ex) {
+            LogHelper.printException(TopBarButtonsPatch.class, "Settings controller failure", ex);
+            settingsMenuController = null;
+            return false;
+        }
+    }
+
+    private static Activity findActivity(Object controller) throws IllegalAccessException {
+        for (Field field : controller.getClass().getDeclaredFields()) {
+            if (!Activity.class.isAssignableFrom(field.getType())) continue;
+
+            field.setAccessible(true);
+            Object value = field.get(controller);
+            if (value instanceof Activity) return (Activity) value;
+        }
+        return null;
     }
 }

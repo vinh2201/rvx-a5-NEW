@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: enable-seekbar-tapping
 val seekbarTappingPatch = resourcePatch(
-    name = "Enable seekbar tapping",
+    name = "Enable seekbar tapping (A5)",
     description = "Enables tap-to-seek on the seekbar of the video player.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: layout-switch
 val layoutSwitchPatch = resourcePatch(
-    name = "Layout switch",
+    name = "Layout switch (A5)",
     description = "Tricks the dpi to use some tablet/phone layouts.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

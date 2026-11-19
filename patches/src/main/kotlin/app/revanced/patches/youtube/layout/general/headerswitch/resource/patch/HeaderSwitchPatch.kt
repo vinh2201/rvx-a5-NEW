@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: header-switch
 val headerSwitchPatch = resourcePatch(
-    name = "Header switch",
+    name = "Header switch (A5)",
     description = "Add switch to change header.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

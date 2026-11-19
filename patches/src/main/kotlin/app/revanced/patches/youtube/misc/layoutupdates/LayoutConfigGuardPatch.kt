@@ -73,7 +73,7 @@ val layoutConfigGuardBytecodePatch = bytecodePatch(
             }
         }
 
-        // Request: the stored configuration is not sent when it is ignored or "Disable layout updates" is on.
+        // Request: the stored configuration is not sent when it is ignored or "Disable layout updates (A5)" is on.
         requestConfigInfoMethodMatch.method.apply {
             // The first three TextUtils.isEmpty() calls check the three values of the config info:
             // hot hash data, cold hash data and cold config data (always the same registers as the checked values).

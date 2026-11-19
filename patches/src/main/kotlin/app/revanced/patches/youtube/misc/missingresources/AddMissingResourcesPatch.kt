@@ -100,7 +100,7 @@ private val DRAWABLE_ALIASES: Map<String, List<String>> = linkedMapOf(
 
 // Old name: add-missing-resources (rv6: "Add missing resources")
 val addMissingResourcesPatch = resourcePatch(
-    name = "Add missing resources",
+    name = "Add missing resources (A5)",
     description = "Adds drawables and icon handling that newer server responses expect, " +
         "which prevents crashes and wrong icons (bell, search, create) when the client version is spoofed. " +
         "Also adds the buttons that the old UI is missing: the list of subscribed channels (Subscriptions tab) " +

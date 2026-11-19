@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-channel-watermark
 val hideChannelWatermarkPatch = resourcePatch(
-    name = "Hide channel watermark",
+    name = "Hide channel watermark (A5)",
     description = "Hides creator's watermarks on videos.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

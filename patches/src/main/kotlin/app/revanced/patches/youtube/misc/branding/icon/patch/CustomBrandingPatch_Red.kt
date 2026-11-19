@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: custom-branding-icon-afn-red
 val customBrandingIconRedPatch = resourcePatch(
-    name = "Custom branding icon Afn (Red)",
+    name = "Custom branding icon Afn (Red) (A5)",
     description = "Changes the YouTube launcher icon (Afn / Red).",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

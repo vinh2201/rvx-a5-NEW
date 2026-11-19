@@ -32,7 +32,7 @@ private val LANGUAGE_LIST = arrayOf(
 
 // Old name: translations
 val translationsPatch = resourcePatch(
-    name = "Translations",
+    name = "Translations (A5)",
     description = "Add Crowdin Translations.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

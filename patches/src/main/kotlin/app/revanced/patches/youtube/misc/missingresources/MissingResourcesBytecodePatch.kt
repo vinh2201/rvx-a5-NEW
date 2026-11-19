@@ -1,5 +1,6 @@
 package app.revanced.patches.youtube.misc.missingresources
 
+import app.revanced.com.android.tools.smali.dexlib2.mutable.MutableMethod.Companion.toMutable
 import app.revanced.patcher.extensions.ExternalLabel
 import app.revanced.patcher.extensions.addInstruction
 import app.revanced.patcher.extensions.addInstructions
@@ -8,23 +9,33 @@ import app.revanced.patcher.extensions.getInstruction
 import app.revanced.patcher.extensions.replaceInstruction
 import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.actionBarConfigMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.attributeResolverMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.contextGetDrawableMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeEnumMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeFromNumberMethodMatch
-import app.revanced.patches.youtube.misc.missingresources.fingerprints.paneChangedMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.pivotTabSelectedMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.resourcesGetDrawableMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.settingsMenuItemClickMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.toolbarMenuMethodMatch
 import app.revanced.shared.util.integrations.Constants.UTILS_PATH
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
+import com.android.tools.smali.dexlib2.util.MethodUtil
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "$UTILS_PATH/MissingResourcesPatch;"
 private const val TOP_BAR_BUTTONS_CLASS_DESCRIPTOR = "$UTILS_PATH/TopBarButtonsPatch;"
 
+// Method that is added to the controller of the "Settings" entry of the app; the extension (TopBarButtonsPatch) calls it.
+private const val OPEN_SETTINGS_METHOD = "rvxa5OpenSettings"
+
 /**
- * Bytecode part of "Add missing resources".
+ * Bytecode part of "Add missing resources (A5)".
  *
  * Why it exists: when the client is spoofed to a newer version (20.x) the server sends layouts/icon types that
  * this old app (16.40.36) does not know:
@@ -120,21 +131,26 @@ val addMissingResourcesBytecodePatch = bytecodePatch(
             }
         }
 
-        // 6. The shown page changed: Optional.isPresent() is true only for the first page of a tab of the bottom bar.
-        paneChangedMethodMatch.let { match ->
-            with(match.method) {
-                val moveResultIndex = match[18]
-                val moveResult = getInstruction(moveResultIndex)
-                if (moveResult.opcode != Opcode.MOVE_RESULT) {
-                    throw IllegalStateException("Unexpected page change method")
-                }
+        // 6. The top bar got the configuration of a page: its int field is the navigation mode (0 = first page of a tab,
+        //    1 = back arrow). v0 is free at the start of the method and is overwritten before it is read.
+        actionBarConfigMethodMatch.method.apply {
+            val registers = implementation!!.registerCount - (parameterTypes.size + 1) // locals (this is not in parameterTypes)
+            if (registers < 1) throw IllegalStateException("No free register in the top bar configuration method")
 
-                val register = (moveResult as OneRegisterInstruction).registerA
-                addInstruction(
-                    moveResultIndex + 1,
-                    "invoke-static {v$register}, $TOP_BAR_BUTTONS_CLASS_DESCRIPTOR->onPaneChanged(Z)V"
-                )
+            val instructions = implementation!!.instructions
+            val intFieldIndex = instructions.indexOfFirst {
+                it.opcode == Opcode.IGET && ((it as ReferenceInstruction).reference as FieldReference).type == "I"
             }
+            if (intFieldIndex < 0) throw IllegalStateException("Navigation mode field of the top bar configuration not found")
+
+            val field = (instructions.elementAt(intFieldIndex) as ReferenceInstruction).reference as FieldReference
+            addInstructions(
+                0,
+                """
+                    iget v0, p1, ${field.definingClass}->${field.name}:${field.type}
+                    invoke-static {v0}, $TOP_BAR_BUTTONS_CLASS_DESCRIPTOR->onActionBarChanged(I)V
+                """
+            )
         }
 
         // 7. The menu of the top bar was filled: add the buttons at its end (p0 = menu, p4 = color of the icons).
@@ -151,6 +167,44 @@ val addMissingResourcesBytecodePatch = bytecodePatch(
             replaceInstruction(
                 returnIndex,
                 "invoke-static {p0, p4}, $TOP_BAR_BUTTONS_CLASS_DESCRIPTOR->onMenuPopulated(Landroid/view/Menu;I)V"
+            )
+        }
+
+        // 8. The "Settings" entry of the overflow menu: its controller opens the settings of the app. The class gets a public
+        //    method that calls the (obfuscated) click method, and the constructor hands the new controller to the extension.
+        settingsMenuItemClickMethodMatch.let { match ->
+            val controllerClass = match.classDef
+            val clickMethod = match.method
+
+            val openMethod = ImmutableMethod(
+                controllerClass.type,
+                OPEN_SETTINGS_METHOD,
+                emptyList(),
+                "Z",
+                AccessFlags.PUBLIC.value or AccessFlags.FINAL.value,
+                null,
+                null,
+                MutableMethodImplementation(2) // v0 and p0 (this)
+            ).toMutable()
+            openMethod.addInstructions(
+                0,
+                """
+                    invoke-virtual {p0}, ${controllerClass.type}->${clickMethod.name}()Z
+                    move-result p0
+                    return p0
+                """
+            )
+            controllerClass.methods.add(openMethod)
+
+            val controllerConstructor = controllerClass.methods.first { MethodUtil.isConstructor(it) }
+            val returnIndex = controllerConstructor.implementation!!.instructions.count() - 1
+            if (controllerConstructor.getInstruction(returnIndex).opcode != Opcode.RETURN_VOID) {
+                throw IllegalStateException("Unexpected constructor of the settings menu controller")
+            }
+
+            controllerConstructor.addInstruction(
+                returnIndex,
+                "invoke-static {p0}, $TOP_BAR_BUTTONS_CLASS_DESCRIPTOR->onSettingsMenuControllerCreated(Ljava/lang/Object;)V"
             )
         }
 

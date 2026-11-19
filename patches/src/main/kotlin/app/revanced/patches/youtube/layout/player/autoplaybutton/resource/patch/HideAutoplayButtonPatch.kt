@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-autoplay-button
 val hideAutoplayButtonPatch = resourcePatch(
-    name = "Hide autoplay button",
+    name = "Hide autoplay button (A5)",
     description = "Hides the autoplay button in the video player.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

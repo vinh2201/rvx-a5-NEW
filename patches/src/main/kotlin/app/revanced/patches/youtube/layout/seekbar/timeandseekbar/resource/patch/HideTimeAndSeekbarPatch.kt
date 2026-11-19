@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-time-and-seekbar
 val hideTimeAndSeekbarPatch = resourcePatch(
-    name = "Hide time and seekbar",
+    name = "Hide time and seekbar (A5)",
     description = "Hides progress bar and time counter on videos.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

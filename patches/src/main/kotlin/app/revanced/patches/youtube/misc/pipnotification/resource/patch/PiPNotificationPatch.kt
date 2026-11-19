@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-firsttime-background-notification (renamed from hide-pip-notification)
 val pipNotificationPatch = resourcePatch(
-    name = "Hide first-time background notification",
+    name = "Hide first-time background notification (A5)",
     description = "Disable notification when you launch background play for the first time.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

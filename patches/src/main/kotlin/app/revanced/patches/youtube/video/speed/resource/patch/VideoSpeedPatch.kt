@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: default-video-speed
 val videoSpeedPatch = resourcePatch(
-    name = "Default video speed",
+    name = "Default video speed (A5)",
     description = "Adds ability to set default video speed settings.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

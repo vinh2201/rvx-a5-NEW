@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-create-button
 val createButtonRemoverPatch = resourcePatch(
-    name = "Hide create button",
+    name = "Hide create button (A5)",
     description = "Hides the create button in the navigation bar.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

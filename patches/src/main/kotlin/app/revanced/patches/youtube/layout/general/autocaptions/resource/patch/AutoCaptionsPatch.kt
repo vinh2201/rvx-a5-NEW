@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-auto-captions
 val autoCaptionsPatch = resourcePatch(
-    name = "Hide auto captions",
+    name = "Hide auto captions (A5)",
     description = "Hide captions from being automatically enabled.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

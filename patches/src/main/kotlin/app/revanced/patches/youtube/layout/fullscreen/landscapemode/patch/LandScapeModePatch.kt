@@ -6,7 +6,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: disable-landscape-mode (old annotation: @Patch(false) -> not selected by default)
 val landScapeModePatch = resourcePatch(
-    name = "Disable landscape mode",
+    name = "Disable landscape mode (A5)",
     description = "Disable landscape mode when entering fullscreen.",
     use = false,
 ) {

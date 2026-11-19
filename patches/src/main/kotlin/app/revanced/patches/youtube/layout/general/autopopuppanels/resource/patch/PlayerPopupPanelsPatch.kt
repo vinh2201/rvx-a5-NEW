@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-auto-player-popup-panels
 val playerPopupPanelsPatch = resourcePatch(
-    name = "Hide auto player popup panels",
+    name = "Hide auto player popup panels (A5)",
     description = "Hide automatic popup panels (playlist or live chat) on video player.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

@@ -40,7 +40,7 @@ DSL vocabulary actually used by the reference (imports with frequency): $SCR/DSL
 | `PatchOptions.X` (shared/patches/options) | top-level option objects in `app.revanced.shared.patches.options` file `PatchOptions.kt`: `youTubeAppNameOption`, `youTubePackageNameOption`, `customSpeedArraysOption`, `overlayButtonsIconOption`, `darkThemeBackgroundColorOption` (see §5) |
 | `ResourceMappingPatch.resourceMappings.single { it.name == "x" }.id` | `resourceIdByName("x")` (from `app.revanced.patches.shared.misc.mapping`) or typed `ResourceType.LAYOUT["x"]`. Dependency `ResourceMappingPatch::class` -> `resourceMappingPatch` |
 | `SharedResourcdIdPatch` (sic) in `misc/resourceid/patch/SharedResourceIdPatch.kt` | `val sharedResourceIdPatch` (keep the exposed ids as top-level `var xxxId = -1L` in that file, same names as the old `companion` members) |
-| `@Name("hide-general-ads")` | `name = "Hide general ads"` (human readable, English, sentence case; reuse rv6's name from `$SCR/src/rv6/patches.json` when an equivalent exists). Internal/helper patches (no `@Patch`) get NO name |
+| `@Name("hide-general-ads")` | `name = "Hide general ads (A5)"` (human readable, English, sentence case, **always with the suffix ` (A5)`** so no name can clash with another bundle; take rv6's name from `$SCR/src/rv6/patches.json` when an equivalent exists and add the suffix). Internal/helper patches (no `@Patch`) get NO name |
 | `@Description("...")` | `description = "..."` |
 | `@Patch(false)` / `include=false` | `use = false` |
 | `@DependsOn([A::class, B::class])` | `dependsOn(aPatch, bPatch)` |
@@ -49,7 +49,7 @@ DSL vocabulary actually used by the reference (imports with frequency): $SCR/DSL
 ## 3. Patch skeleton (v22)
 ```kotlin
 val hideGeneralAdsPatch = bytecodePatch(
-    name = "Hide general ads",
+    name = "Hide general ads (A5)",
     description = "Removes general ads.",
     use = true,               // omit when true
 ) {

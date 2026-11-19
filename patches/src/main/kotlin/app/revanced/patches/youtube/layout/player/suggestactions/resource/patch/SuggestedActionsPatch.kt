@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-suggested-actions
 val suggestedActionsPatch = resourcePatch(
-    name = "Hide suggested actions",
+    name = "Hide suggested actions (A5)",
     description = "Hide the suggested actions bar inside the player.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

@@ -12,7 +12,7 @@ import app.revanced.shared.util.resources.ResourceUtils.copyXmlNode
 
 // Old name: overlay-buttons (class name in the old code: OverlayButtonsResourcePatch)
 val overlayButtonsResourcePatch = resourcePatch(
-    name = "Overlay buttons",
+    name = "Overlay buttons (A5)",
     description = "Add overlay buttons for ReVanced Extended.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

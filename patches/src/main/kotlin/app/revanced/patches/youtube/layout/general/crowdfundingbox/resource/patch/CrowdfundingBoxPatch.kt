@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-crowdfunding-box
 val crowdfundingBoxPatch = resourcePatch(
-    name = "Hide crowdfunding box",
+    name = "Hide crowdfunding box (A5)",
     description = "Hides the crowdfunding box between the player and video description.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

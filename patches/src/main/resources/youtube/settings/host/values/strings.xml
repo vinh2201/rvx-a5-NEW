@@ -604,7 +604,6 @@ Versions older than 20.02.34 no longer work and are replaced by 20.05.46.
 20.20.42: restores the old components filter
 21.11.48: restores the old captions behavior
 Please read \"More information about Spoof app version\""</string>
-    <string name="revanced_layout_guard_auto_disabled">"The app could not start, so Disable layout updates was turned on automatically. You can turn it off again in the settings."</string>
     <string name="revanced_spoof_app_version_info_title">More information about \"Spoof app version\"</string>
     <string name="revanced_spoof_app_version_info_summary">https://github.com/d4n3436/revanced-patches-android5/wiki/Spoof-app-version-information</string>
     <string name="revanced_reboot_first_run">"Restart to load the layout normally when the first run.

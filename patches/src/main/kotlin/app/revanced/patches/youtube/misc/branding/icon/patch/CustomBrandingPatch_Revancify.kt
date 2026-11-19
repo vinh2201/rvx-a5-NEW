@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: custom-branding-icon-revancify (was @Patch(false))
 val customBrandingIconRevancifyPatch = resourcePatch(
-    name = "Custom branding icon Revancify",
+    name = "Custom branding icon Revancify (A5)",
     description = "Changes the YouTube launcher icon (Revancify).",
     use = false,
 ) {

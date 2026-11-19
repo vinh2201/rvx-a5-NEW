@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: force-vp9-codec
 val forceVP9CodecPatch = resourcePatch(
-    name = "Force VP9 codec",
+    name = "Force VP9 codec (A5)",
     description = "Forces the VP9 codec for videos.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

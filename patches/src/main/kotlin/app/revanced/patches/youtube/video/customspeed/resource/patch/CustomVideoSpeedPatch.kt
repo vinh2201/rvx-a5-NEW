@@ -10,7 +10,7 @@ import app.revanced.shared.util.resources.ResourceUtils.copyXmlNode
 
 // Old name: custom-video-speed
 val customVideoSpeedPatch = resourcePatch(
-    name = "Custom video speed",
+    name = "Custom video speed (A5)",
     description = "Adds more video speed options.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

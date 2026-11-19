@@ -91,33 +91,47 @@ internal val BytecodePatchContext.pivotTabSelectedMethodMatch by composingFirstM
     )
 }
 
-// Bottom bar controller (16.40.36: owc.p(PaneDescriptor)): the shown page changed. The page selects a tab of the bottom bar
-// only when it is the first page of that tab (Optional.isPresent()), pages like a channel or search results do not.
-internal val BytecodePatchContext.paneChangedMethodMatch by composingFirstMethod {
+// Top bar controller (16.40.36: mhe.b(config, ...)): the top bar gets the configuration of a page. The first parameter is the
+// configuration (title, custom view, buttons, colors and an int: 0 = no navigation icon = first page of a tab of the bottom
+// bar, 1 = back arrow = a page that was opened from another page). The first parameter is a class of the app (any "L").
+internal val BytecodePatchContext.actionBarConfigMethodMatch by composingFirstMethod {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
     returnType("V")
-    parameterTypes("Lcom/google/android/apps/youtube/app/common/ui/navigation/PaneDescriptor;")
+    parameterTypes(
+        "L",
+        "Lcom/google/android/apps/youtube/app/common/ui/actionbar/ActionBarColor;",
+        "I",
+        "Lcom/google/android/apps/youtube/app/common/ui/actionbar/ActionBarColor;",
+        "I",
+        "Lcom/google/android/apps/youtube/app/common/ui/actionbar/ActionBarColor;",
+        "Z",
+    )
+}
+
+// Controller of the "Settings" entry of the overflow menu (16.40.36: luw.m()): opens the settings of the app (it adds the account
+// and starts the real settings activity without any intermediate window). It is the click action of the entry; the method
+// has no parameter and always returns true. The gear button of the extension calls it.
+internal val BytecodePatchContext.settingsMenuItemClickMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
+    returnType("Z")
+    parameterTypes()
     opcodes(
         Opcode.IGET_OBJECT,
-        Opcode.INVOKE_VIRTUAL,
+        Opcode.INVOKE_VIRTUAL, // Intent of the settings
         Opcode.MOVE_RESULT_OBJECT,
         Opcode.IGET_OBJECT,
-        Opcode.INVOKE_VIRTUAL, // Object.getClass() (null check)
-        Opcode.NEW_INSTANCE,
-        Opcode.INVOKE_DIRECT,
-        Opcode.INVOKE_VIRTUAL, // Optional.flatMap()
+        Opcode.IGET_OBJECT,
+        Opcode.IGET_OBJECT,
+        Opcode.INVOKE_INTERFACE, // account
+        Opcode.MOVE_RESULT_OBJECT,
+        Opcode.INVOKE_VIRTUAL, // account -> future
         Opcode.MOVE_RESULT_OBJECT,
         Opcode.SGET_OBJECT,
-        Opcode.INVOKE_VIRTUAL, // Optional.map()
-        Opcode.MOVE_RESULT_OBJECT,
-        Opcode.NEW_INSTANCE,
-        Opcode.CONST_4,
+        Opcode.NEW_INSTANCE, // callback that starts the settings
         Opcode.INVOKE_DIRECT,
-        Opcode.INVOKE_VIRTUAL, // Optional.flatMap()
-        Opcode.MOVE_RESULT_OBJECT,
-        Opcode.INVOKE_VIRTUAL, // Optional.isPresent()
-        Opcode.MOVE_RESULT,
-        Opcode.IF_EQZ,
+        Opcode.INVOKE_STATIC,
+        Opcode.CONST_4,
+        Opcode.RETURN,
     )
 }
 

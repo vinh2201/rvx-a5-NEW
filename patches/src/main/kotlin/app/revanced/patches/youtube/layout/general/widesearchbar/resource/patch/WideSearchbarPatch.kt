@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: enable-wide-searchbar
 val wideSearchbarPatch = resourcePatch(
-    name = "Enable wide search bar",
+    name = "Enable wide search bar (A5)",
     description = "Replaces the search icon with a wide search bar. This will hide the YouTube logo when active.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

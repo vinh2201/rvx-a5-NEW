@@ -6,7 +6,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: check-android-version
 val checkAndroidVersionPatch = resourcePatch(
-    name = "Check android version",
+    name = "Check android version (A5)",
     description = "If the device is Android 6.0 or higher, show a warning dialog.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

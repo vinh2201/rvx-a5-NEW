@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-tooltip-content (the old class was misnamed MinimizedPlaybackPatch)
 val tooltipContentViewPatch = resourcePatch(
-    name = "Hide tooltip content",
+    name = "Hide tooltip content (A5)",
     description = "Hides the tooltip box that appears on first install.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

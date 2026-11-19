@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-shorts-button
 val shortsButtonRemoverPatch = resourcePatch(
-    name = "Hide shorts button",
+    name = "Hide shorts button (A5)",
     description = "Hides the shorts button in the navigation bar.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

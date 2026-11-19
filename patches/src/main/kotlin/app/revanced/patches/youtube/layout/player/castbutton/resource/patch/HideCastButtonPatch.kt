@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-cast-button
 val hideCastButtonPatch = resourcePatch(
-    name = "Hide cast button",
+    name = "Hide cast button (A5)",
     description = "Hides the cast button in the video player.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

@@ -10,7 +10,7 @@ import app.revanced.shared.util.resources.ResourceUtils.copyXmlNode
 
 // Old name: materialyou (was @Patch(false))
 val materialYouPatch = resourcePatch(
-    name = "Material You",
+    name = "Material You (A5)",
     description = "Enables MaterialYou theme for Android 12+",
     use = false,
 ) {

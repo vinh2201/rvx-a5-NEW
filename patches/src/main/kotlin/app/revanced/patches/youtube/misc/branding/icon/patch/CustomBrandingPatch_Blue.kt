@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: custom-branding-icon-afn-blue (was @Patch(false))
 val customBrandingIconBluePatch = resourcePatch(
-    name = "Custom branding icon Afn (Blue)",
+    name = "Custom branding icon Afn (Blue) (A5)",
     description = "Changes the YouTube launcher icon (Afn / Blue).",
     use = false,
 ) {

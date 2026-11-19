@@ -6,7 +6,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: disable-layout-updates (rv6: "Disable layout updates")
 val disableLayoutUpdatesPatch = resourcePatch(
-    name = "Disable layout updates",
+    name = "Disable layout updates (A5)",
     description = "Adds an option to disable layout updates by the server.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

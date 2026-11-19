@@ -8,7 +8,7 @@ import app.revanced.shared.util.resources.ResourceUtils.copyXmlNode
 
 // Old name: default-video-quality
 val videoQualityPatch = resourcePatch(
-    name = "Default video quality",
+    name = "Default video quality (A5)",
     description = "Adds ability to set default video quality settings.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

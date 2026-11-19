@@ -6,7 +6,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: optimize-resource
 val optimizeResourcePatch = resourcePatch(
-    name = "Optimize resource",
+    name = "Optimize resource (A5)",
     description = "Removes duplicate resources and adds missing translation files from YouTube.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

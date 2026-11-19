@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: enable-external-browser
 val externalBrowserPatch = resourcePatch(
-    name = "Enable external browser",
+    name = "Enable external browser (A5)",
     description = "Use an external browser to open the url.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

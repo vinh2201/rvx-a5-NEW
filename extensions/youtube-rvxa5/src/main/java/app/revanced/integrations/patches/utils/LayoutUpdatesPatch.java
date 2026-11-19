@@ -1,21 +1,9 @@
 package app.revanced.integrations.patches.utils;
 
-import static app.revanced.integrations.utils.StringRef.str;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
-import android.widget.Toast;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-
 import app.revanced.integrations.patches.extended.VersionOverridePatch;
 import app.revanced.integrations.settings.SettingsEnum;
 import app.revanced.integrations.utils.LogHelper;
 import app.revanced.integrations.utils.ReVancedUtils;
-import app.revanced.integrations.utils.SharedPrefHelper;
 
 /**
  * Runtime part of the layout configuration guard, "Disable layout updates" and "Freeze layout updates"
@@ -42,10 +30,9 @@ import app.revanced.integrations.utils.SharedPrefHelper;
  *     <li>Otherwise the stored value is used unchanged.</li>
  * </ol>
  * <p>
- * <b>Crash loop breaker:</b> a start that did not live {@link #STARTUP_GRACE_MILLISECONDS} (the app died while
- * opening) is remembered. If the previous start failed, "Disable layout updates" is switched on (with a notice) so
- * the app starts with its built-in layout instead of crashing on a stored configuration it cannot read. The spoof
- * setting is never touched; the user can switch "Disable layout updates" off again in the settings.
+ * <b>No automatic switching:</b> this class never changes "Disable layout updates" or "Freeze layout updates" by itself.
+ * (An earlier version switched "Disable layout updates" on when the previous start of the app lasted less than
+ * 6 seconds. That also fired when the app was simply closed or restarted soon after the start, so it was removed.)
  * <p>
  * Nothing is frozen while the configuration is ignored or tainted, and nothing is saved when the value is null or
  * empty. The settings are only read once the application context exists, so a too early call can never lock
@@ -152,12 +139,6 @@ public final class LayoutUpdatesPatch {
     }
 
     private static boolean decideIgnoreStoredConfig() {
-        try {
-            breakCrashLoop();
-        } catch (Throwable ex) {
-            LogHelper.printException(LayoutUpdatesPatch.class, "Crash loop breaker failed", ex);
-        }
-
         if (SettingsEnum.DISABLE_LAYOUT_UPDATES.getBoolean()) {
             return true;
         }
@@ -190,98 +171,6 @@ public final class LayoutUpdatesPatch {
         }
 
         return false;
-    }
-
-    // endregion
-
-    // region Crash loop breaker
-
-    private static final String PREF_STARTING = "revanced_layout_guard_starting";
-    /**
-     * Mark of the old "spoof safety net" (removed). Read once so that an app that was already crashing before the
-     * update is recovered at its first start.
-     */
-    private static final String PREF_STARTING_LEGACY = "revanced_spoof_app_version_starting";
-    private static final long STARTUP_GRACE_MILLISECONDS = 6 * 1000;
-    private static final long NOTICE_DELAY_MILLISECONDS = 3 * 1000;
-
-    /**
-     * The process is marked as "starting" and the mark is removed once it has lived
-     * {@link #STARTUP_GRACE_MILLISECONDS}. A mark that is still there at the next start means the previous start
-     * did not finish: then "Disable layout updates" is switched on.
-     */
-    private static void breakCrashLoop() {
-        Context ctx = ReVancedUtils.getContext();
-        final SharedPreferences prefs = SharedPrefHelper.getPreferences(ctx, SharedPrefHelper.SharedPrefNames.REVANCED);
-        if (prefs == null || !isMainProcess(ctx)) {
-            return; // Other processes of the app must not touch the mark.
-        }
-
-        boolean previousStartFailed = prefs.getBoolean(PREF_STARTING, false)
-                || prefs.getBoolean(PREF_STARTING_LEGACY, false);
-
-        prefs.edit()
-                .remove(PREF_STARTING_LEGACY)
-                .putBoolean(PREF_STARTING, true)
-                .commit();
-
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    prefs.edit().putBoolean(PREF_STARTING, false).apply();
-                } catch (Throwable ex) {
-                    LogHelper.printException(LayoutUpdatesPatch.class, "Failed to clear the startup mark", ex);
-                }
-            }
-        }, STARTUP_GRACE_MILLISECONDS);
-
-        if (previousStartFailed && !SettingsEnum.DISABLE_LAYOUT_UPDATES.getBoolean()) {
-            SettingsEnum.DISABLE_LAYOUT_UPDATES.saveValue(true);
-            LogHelper.info(LayoutUpdatesPatch.class, "The previous start failed: Disable layout updates was switched on");
-            showNotice(ctx);
-        }
-    }
-
-    private static void showNotice(final Context ctx) {
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Toast.makeText(ctx, str("revanced_layout_guard_auto_disabled"), Toast.LENGTH_LONG).show();
-                } catch (Throwable ex) {
-                    LogHelper.printException(LayoutUpdatesPatch.class, "Failed to show the notice", ex);
-                }
-            }
-        }, NOTICE_DELAY_MILLISECONDS);
-    }
-
-    /**
-     * @return true if this is the main process of the app (the package name is the process name).
-     */
-    private static boolean isMainProcess(Context ctx) {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader("/proc/self/cmdline"));
-            String processName = reader.readLine();
-            if (processName == null) {
-                return true;
-            }
-            int end = processName.indexOf('\0');
-            if (end >= 0) {
-                processName = processName.substring(0, end);
-            }
-            return processName.trim().equals(ctx.getPackageName());
-        } catch (Throwable ex) {
-            return true;
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (Throwable ignored) {
-                }
-            }
-        }
     }
 
     // endregion

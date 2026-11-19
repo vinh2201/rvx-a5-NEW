@@ -33,7 +33,7 @@ private val additionalReplacements = arrayOf(
 
 // Old name: hide-general-ads
 val generalAdsPatch = resourcePatch(
-    name = "Hide general ads",
+    name = "Hide general ads (A5)",
     description = "Hooks the method which parses the bytes into a ComponentContext to filter components.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

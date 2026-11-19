@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: enable-open-links-directly
 val openLinksDirectlyPatch = resourcePatch(
-    name = "Enable open links directly",
+    name = "Enable open links directly (A5)",
     description = "Bypass URL redirects (youtube.com/redirect) when opening links in video descriptions.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

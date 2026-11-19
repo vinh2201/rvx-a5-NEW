@@ -6,7 +6,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: switch-create-notification
 val switchCreateButtonPatch = resourcePatch(
-    name = "Switch create notification",
+    name = "Switch create notification (A5)",
     description = "Switches the create button and notification button.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

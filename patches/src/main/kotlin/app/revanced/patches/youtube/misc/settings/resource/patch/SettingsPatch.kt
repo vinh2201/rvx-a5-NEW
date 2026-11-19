@@ -12,7 +12,7 @@ import org.w3c.dom.Element
 
 // Old name: settings
 val settingsPatch = resourcePatch(
-    name = "Settings",
+    name = "Settings (A5)",
     description = "Applies mandatory patches to implement ReVanced settings into the application.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-next-prev-button
 val hideNextPrevButtonPatch = resourcePatch(
-    name = "Hide next prev button",
+    name = "Hide next prev button (A5)",
     description = "Hides the next prev button in the player controller.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

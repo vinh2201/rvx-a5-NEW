@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-player-overlay-filter
 val playerOverlayFilterPatch = resourcePatch(
-    name = "Hide player overlay filter",
+    name = "Hide player overlay filter (A5)",
     description = "Remove the dark filter layer from the player's background.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

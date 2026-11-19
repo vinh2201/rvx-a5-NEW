@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-email-address
 val hideEmailAddressPatch = resourcePatch(
-    name = "Hide email address",
+    name = "Hide email address (A5)",
     description = "Hides the email address in the account switcher.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

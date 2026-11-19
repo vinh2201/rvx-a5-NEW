@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: custom-branding-name
 val customBrandingNamePatch = resourcePatch(
-    name = "Custom branding name",
+    name = "Custom branding name (A5)",
     description = "Changes the YouTube launcher name to your choice (defaults to ReVanced Extended).",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

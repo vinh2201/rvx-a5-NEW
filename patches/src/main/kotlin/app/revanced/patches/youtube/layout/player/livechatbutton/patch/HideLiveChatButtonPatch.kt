@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-live-chat-button
 val hideLiveChatButtonPatch = resourcePatch(
-    name = "Hide live chat button",
+    name = "Hide live chat button (A5)",
     description = "Hides the live chat button in the video player.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

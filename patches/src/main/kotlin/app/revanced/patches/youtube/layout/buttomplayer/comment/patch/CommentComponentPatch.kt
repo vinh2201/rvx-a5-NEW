@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-comment-component
 val commentComponentPatch = resourcePatch(
-    name = "Hide comment component",
+    name = "Hide comment component (A5)",
     description = "Adds options to hide comment component under a video.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

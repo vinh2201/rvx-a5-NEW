@@ -2,14 +2,18 @@
 <resources>
     <!--
         Theme of the shell activity of the settings (Shell_SettingsActivity). The shell activity only looks up the account and
-        starts the real settings screen, but with its original theme (dark, with a title bar) a black window with the name of
-        the app shows up for a moment. This theme is transparent and has no title, so nothing is shown.
-        The parent is the original theme, everything else (attributes the app looks up) stays as it was.
+        starts the real settings screen, but with its original theme (dark, with an action bar) a black window with the name
+        of the app shows up for a moment. This theme is transparent and has no action bar, so nothing is shown.
+        The parent is the original "no action bar" theme of the app: the shell activity is an AppCompat activity, and AppCompat
+        only skips its title bar when windowActionBar is false and ITS OWN windowNoTitle is true (the android: attribute alone
+        is not enough). Everything else (attributes the app looks up) stays as it was.
     -->
-    <style name="Theme.RvxA5.TransparentShell" parent="@style/Theme.YouTube.Dark">
+    <style name="Theme.RvxA5.TransparentShell" parent="@style/Theme.YouTube.Dark.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:backgroundDimEnabled">false</item>

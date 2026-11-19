@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: enable-old-quality-layout
 val oldQualityLayoutPatch = resourcePatch(
-    name = "Enable old quality layout",
+    name = "Enable old quality layout (A5)",
     description = "Enables the original quality flyout menu.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

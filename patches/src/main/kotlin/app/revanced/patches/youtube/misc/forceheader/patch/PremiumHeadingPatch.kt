@@ -10,7 +10,7 @@ import java.nio.file.StandardCopyOption
 
 // Old name: force-premium-heading (was @Patch(false))
 val premiumHeadingPatch = resourcePatch(
-    name = "Force premium heading",
+    name = "Force premium heading (A5)",
     description = "Forces premium heading on the home screen.",
     use = false,
 ) {

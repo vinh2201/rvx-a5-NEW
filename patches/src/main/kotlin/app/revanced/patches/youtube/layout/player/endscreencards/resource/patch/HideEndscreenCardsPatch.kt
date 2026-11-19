@@ -7,7 +7,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: hide-endscreen-cards
 val hideEndscreenCardsPatch = resourcePatch(
-    name = "Hide endscreen cards",
+    name = "Hide endscreen cards (A5)",
     description = "Hides the suggested video cards at the end of a video in fullscreen.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))

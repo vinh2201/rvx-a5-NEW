@@ -6,7 +6,7 @@ import app.revanced.shared.util.resources.ResourceHelper
 
 // Old name: freeze-layout-updates (rv6: "Freeze layout updates")
 val freezeLayoutUpdatesPatch = resourcePatch(
-    name = "Freeze layout updates",
+    name = "Freeze layout updates (A5)",
     description = "Adds an option to keep the layout configuration of the first start and ignore later layout updates.",
 ) {
     compatibleWith("com.google.android.youtube"("16.40.36"))
