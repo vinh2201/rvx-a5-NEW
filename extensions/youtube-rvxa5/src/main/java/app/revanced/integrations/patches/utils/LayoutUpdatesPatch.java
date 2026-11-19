@@ -30,9 +30,12 @@ import app.revanced.integrations.utils.ReVancedUtils;
  *     <li>Otherwise the stored value is used unchanged.</li>
  * </ol>
  * <p>
- * <b>No automatic switching:</b> this class never changes "Disable layout updates" or "Freeze layout updates" by itself.
+ * <b>Automatic switching:</b> this class never changes "Disable layout updates" or "Freeze layout updates" by itself.
  * (An earlier version switched "Disable layout updates" on when the previous start of the app lasted less than
  * 6 seconds. That also fired when the app was simply closed or restarted soon after the start, so it was removed.)
+ * The only automatic switching is done by the settings screen: when the user switches "Spoof app version" off there,
+ * both switches are switched on once (see {@code ReVancedSettingsFragment.enableLayoutUpdateSwitches}); the user can
+ * switch them off again afterwards.
  * <p>
  * Nothing is frozen while the configuration is ignored or tainted, and nothing is saved when the value is null or
  * empty. The settings are only read once the application context exists, so a too early call can never lock

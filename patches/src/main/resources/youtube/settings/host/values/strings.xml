@@ -596,7 +596,7 @@ Rate Limited (Too many from the same user or IP)"</string>
     <string name="revanced_spoof_app_version_category">Version spoofing</string>
     <string name="revanced_spoof_app_version_title">Spoof app version</string>
     <string name="revanced_spoof_app_version_summary_on">The server sees the version set below and the stored layout configuration is ignored. Restart the app to apply</string>
-    <string name="revanced_spoof_app_version_summary_off">The server sees the real app version</string>
+    <string name="revanced_spoof_app_version_summary_off">The server sees the real app version. Switching this off also switched on Disable layout updates and Freeze layout updates (you can switch them off again). Restart the app to apply</string>
     <string name="revanced_spoof_app_version_target_title">Version to spoof</string>
     <string name="revanced_spoof_app_version_target_summary">"Version the server sees. Empty = 20.05.46
 Versions older than 20.02.34 no longer work and are replaced by 20.05.46.
@@ -717,7 +717,7 @@ Side effects include:
 • Audio track menu is missing.
 • Some live streams are not supported for playback."</string>
     <string name="revanced_spoof_client_use_tv_title">TV (TVHTML5, experimental)</string>
-    <string name="revanced_spoof_client_use_tv_summary">"Spoof client to the TV web clients (TV, TV Legacy, TV Simply) of rvx / Morphe.
+    <string name="revanced_spoof_client_use_tv_summary">"Spoof client to the TV web clients (TV, TV Legacy, TV Simply) of rvx and other forks.
 
 Side effects include:
 • These clients need the player JavaScript to decrypt the streams (and may need a PoToken), which this app cannot do. Most videos will not play.

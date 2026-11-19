@@ -11,9 +11,9 @@ private const val SETTINGS_SHELL_ACTIVITY = "com.google.android.apps.youtube.app
 // Drawable alias -> candidate targets (the first target that exists in 16.40.36 is used; aliases without any existing
 // target are skipped, aliases whose name already exists are never replaced).
 //
-// Merged from rv6 (17.34.36 names) and morphe-legacy (19.16.39 names). Newer clients/servers look these names up by name
+// Merged from rv6 (17.34.36 names) and the legacy branch of another patch group (19.16.39 names). Newer clients/servers look these names up by name
 // (Shorts action buttons, Cairo navigation icons, comment icons); the aliases point to the legacy artwork that 16.40.36 has.
-// PORT-NOTE: in 16.40.36 the following rv6/morphe aliases have no target and are therefore skipped:
+// PORT-NOTE: in 16.40.36 the following rv6 / other forks aliases have no target and are therefore skipped:
 // remix (ic_remix_filled_white_*), sparkle (yt_fill_spark*), Shorts heart, shorts_creation_secondary_rounded_button_background.
 private val DRAWABLE_ALIASES: Map<String, List<String>> = linkedMapOf(
     // Cairo navigation / top bar icons.

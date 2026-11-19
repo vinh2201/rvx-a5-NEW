@@ -39,7 +39,7 @@ public final class GeneralAdsPatch extends Filter {
         var latestPosts = new BlockRule(SettingsEnum.ADREMOVER_LATEST_POSTS, "post_shelf");
         var medicalPanel = new BlockRule(SettingsEnum.ADREMOVER_MEDICAL_PANEL, "medical_panel", "emergency_onebox");
         var merchandise = new BlockRule(SettingsEnum.ADREMOVER_MERCHANDISE, "product_carousel",
-                // Newer names of the shopping components (rv6 / Morphe, sent by newer servers).
+                // Newer names of the shopping components (rv6 / other forks, sent by newer servers).
                 "shopping_carousel", "shopping_description_shelf", "shopping_item_card_list", "shopping_timely_shelf");
         var officialCard = new BlockRule(SettingsEnum.ADREMOVER_OFFICIAL_CARDS, "official_card");
         var paidContent = new BlockRule(SettingsEnum.ADREMOVER_PAID_CONTENT, "paid_content_overlay");
@@ -52,7 +52,7 @@ public final class GeneralAdsPatch extends Filter {
         var generalAds = new BlockRule(
             SettingsEnum.ADREMOVER_GENERAL_ADS,
                 "active_view_display_container",
-                // Components that newer servers send (rv6 / Morphe AdsFilter), harmless when they are not present.
+                // Components that newer servers send (rv6 / AdsFilter of other forks), harmless when they are not present.
                 "alert_banner_promo",
                 "composite_concurrent_carousel_layout",
                 "full_width_square_image_carousel_layout",

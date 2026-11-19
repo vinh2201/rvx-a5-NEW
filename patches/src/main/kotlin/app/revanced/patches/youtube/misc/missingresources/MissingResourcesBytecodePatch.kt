@@ -46,7 +46,7 @@ private const val OPEN_SETTINGS_METHOD = "rvxa5OpenSettings"
  * Comparison:
  *  - rv6 only remapped the three bottom-bar icons (home / shorts / subscriptions) and rescued everything else with a
  *    thread-local "last icon type" guess -> the top-bar bell/search icons were wrong. Not ported.
- *  - morphe-legacy remaps every Cairo icon type to the legacy icon type with the same meaning; that mapping is used here
+ *  - the legacy branch of another patch group remaps every Cairo icon type to the legacy icon type with the same meaning; that mapping is used here
  *    (see MissingResourcesPatch.getLegacyIconType) and the drawable guards only return a transparent drawable.
  *
  * Buttons that the old UI of 16.40.36 does not have are added here too (see TopBarButtonsPatch.java): the button

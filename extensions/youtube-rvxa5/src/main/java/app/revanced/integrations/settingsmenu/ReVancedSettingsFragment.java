@@ -19,8 +19,10 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import app.revanced.integrations.utils.IntegrationVersion;
 import app.revanced.integrations.patches.button.AutoRepeat;
@@ -48,10 +50,23 @@ public class ReVancedSettingsFragment extends PreferenceFragment {
     public static final String[] DownloaderPackageNameList = {"ussr.razar.youtube_dl", "org.schabi.newpipe", "org.polymorphicshade.newpipe", "com.junkfood.seal"};
     public static final String[] DownloaderURLList = {"https://github.com/razar-dev/PowerTube/releases/latest", "https://github.com/TeamNewPipe/NewPipe/releases/latest", "https://github.com/polymorphicshade/NewPipe/releases/latest", "https://github.com/JunkFood02/Seal/releases/latest"};
 
+    /**
+     * Keys of the switches that {@link #enableLayoutUpdateSwitches()} switched on and whose change event was not seen yet.
+     */
+    private final Set<String> autoSwitchedKeys = new HashSet<>();
+
     @SuppressLint("SuspiciousIndentation")
     SharedPreferences.OnSharedPreferenceChangeListener listener = (sharedPreferences, str) -> {
         for (SettingsEnum setting : SettingsEnum.values()) {
             if (!setting.getPath().equals(str)) continue;
+
+            if (autoSwitchedKeys.remove(str)) {
+                // Switched on by the app itself (see enableLayoutUpdateSwitches): no restart question of its own,
+                // the one of the "Spoof app version" switch covers it.
+                setting.setValue(true);
+                continue;
+            }
+
             Preference pref = this.findPreferenceOnScreen(str);
 
             if (pref instanceof SwitchPreference) {
@@ -68,6 +83,8 @@ public class ReVancedSettingsFragment extends PreferenceFragment {
                     AutoRepeat.changeSelected(SettingsEnum.ENABLE_ALWAYS_AUTO_REPEAT.getBoolean(), true);
                 } else if (setting.equals(SettingsEnum.OVERLAY_BUTTON_DOWNLOADS)) {
                     Download.refreshVisibility();
+                } else if (setting.equals(SettingsEnum.SPOOF_APP_VERSION) && !setting.getBoolean()) {
+                    enableLayoutUpdateSwitches();
                 }
 
             } else if (pref instanceof EditTextPreference) {
@@ -137,6 +154,37 @@ public class ReVancedSettingsFragment extends PreferenceFragment {
             }
         }
     };
+
+    /**
+     * The user switched "Spoof app version" off: the stored layout configuration (made for the newer app that the server
+     * saw) must not reach the real, old app, which could crash on it. So "Disable layout updates" and "Freeze layout
+     * updates" are switched on, once, at this moment. Afterwards the user can switch them off again, nothing switches
+     * them back (and nothing switches them on at start).
+     */
+    private void enableLayoutUpdateSwitches() {
+        for (SettingsEnum layoutSetting : new SettingsEnum[]{
+                SettingsEnum.DISABLE_LAYOUT_UPDATES, SettingsEnum.FREEZE_LAYOUT_UPDATES}) {
+            try {
+                String key = layoutSetting.getPath();
+                Preference layoutPref = findPreferenceOnScreen(key);
+
+                if (layoutPref instanceof SwitchPreference) {
+                    SwitchPreference switchPref = (SwitchPreference) layoutPref;
+                    if (!switchPref.isChecked()) {
+                        autoSwitchedKeys.add(key);
+                        switchPref.setChecked(true); // saves the value and fires the listener
+                    }
+                } else if (!layoutSetting.getBoolean()) {
+                    // The switch is not on this screen (its patch is not applied): only keep the value.
+                    layoutSetting.saveValue(true);
+                }
+
+                layoutSetting.setValue(true);
+            } catch (Throwable ex) {
+                LogHelper.printException(ReVancedSettingsFragment.class, "enableLayoutUpdateSwitches failure", ex);
+            }
+        }
+    }
 
     public ReVancedSettingsFragment() {
     }

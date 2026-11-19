@@ -18,7 +18,7 @@ import app.revanced.integrations.requests.Route;
  * Routes and the client table used by "Spoof video streams".
  *
  * <p>
- * Client table: taken from ReVanced patches (v22) and Morphe (legacy), the values of rvx a6 were compared as well.
+ * Client table: taken from ReVanced patches (v22) and another community patch group (legacy branch), the values of rvx a6 were compared as well.
  * Only clients that return direct (non SABR, no PoToken, no JS player) DASH/progressive stream URLs are listed, since this old
  * app can play nothing else. Clients that stopped working were removed on purpose:
  * The values of "Android VR", "Android Studio", "visionOS" and "Android No SDK" were compared with rvx (inotia00).
@@ -163,14 +163,14 @@ public final class PlayerRoutes {
                 "Oculus", "Quest 3", "Android", "12", 32, "UP1A.231005.007.A1",
                 false),
         /**
-         * Morphe ANDROID_VR_DASH ("Android VR Downgraded"): PICO 4 (ByteDance).
+         * ANDROID_VR_DASH of another patch group ("Android VR Downgraded"): PICO 4 (ByteDance).
          */
         ANDROID_VR_PICO(28, "ANDROID_VR",
                 "com.google.android.apps.youtube.vr.pico", "1.64.34",
                 "Pico", "A8110", "Android", "10", 29, "5.13.7",
                 false),
         /**
-         * Morphe ANDROID_XR_DASH ("Android XR Downgraded"): Samsung Galaxy XR.
+         * ANDROID_XR_DASH of another patch group ("Android XR Downgraded"): Samsung Galaxy XR.
          * Video not playable: Kids, Paid, Movie, Private, Age-restricted. Can only be used when logged out.
          */
         ANDROID_XR(28, "ANDROID_VR",
@@ -178,7 +178,7 @@ public final class PlayerRoutes {
                 "Samsung", "SM-I610", "Android", "14", 34, "UML1.250710.002.A1",
                 false),
         /**
-         * ReVanced v22 / Morphe ANDROID_CREATOR ("Android Studio").
+         * ReVanced v22 / another patch group ANDROID_CREATOR ("Android Studio").
          * Cannot play livestreams (HLS only) and lacks HDR, but can play videos with music and labeled "for children".
          * Requires login.
          */
@@ -188,10 +188,12 @@ public final class PlayerRoutes {
                 true),
         /**
          * rvx a6 ANDROID_UNPLUGGED ("Android TV", Google TV Streamer).
+         * Version of the YouTube TV app (com.google.android.apps.youtube.unplugged): 10.46.1, the newest one found on
+         * APKMirror on 2026-11-19 (it was 10.30.1 before). The device values (Google TV Streamer, Android 14) are unchanged.
          * Requires login.
          */
         ANDROID_UNPLUGGED(29, "ANDROID_UNPLUGGED",
-                "com.google.android.apps.youtube.unplugged", "10.30.1",
+                "com.google.android.apps.youtube.unplugged", "10.46.1",
                 "Google", "Google TV Streamer", "Android", "14", 34, "UTTK.241210.003",
                 true),
         /**
@@ -227,7 +229,7 @@ public final class PlayerRoutes {
                 null, null, "Android", null, -1, Build.ID,
                 false),
         /**
-         * Morphe VISIONOS_1_03 (internal YouTube client of an unreleased visionOS app, ReVanced v22 "visionOS").
+         * VISIONOS_1_03 of another patch group (internal YouTube client of an unreleased visionOS app, ReVanced v22 "visionOS").
          * Apple client: the OS name is sent as "visionOS" and no Android SDK version is sent.
          * Logged out. Video not playable: Kids, Paid, Movie, Private, Age-restricted. May stop working at any time.
          */
@@ -236,7 +238,7 @@ public final class PlayerRoutes {
                 "com.google.visionosyoutube/1.03 (RealityDevice17,1; U; CPU visionOS 26_6_1 like Mac OS X; en_US) gzip",
                 false),
         /**
-         * Morphe VISIONOS_1_02: older visionOS app version (no AV1).
+         * VISIONOS_1_02 of another patch group: older visionOS app version (no AV1).
          */
         VISIONOS_1_02(101, "VISIONOS", "1.02",
                 "Apple", "RealityDevice14,1", "visionOS", "26.6.1", 0,
@@ -250,7 +252,7 @@ public final class PlayerRoutes {
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
                 false),
         /**
-         * Morphe TV_SABR / rvx TV (TVHTML5, game console). EXPERIMENTAL: this client needs the player JavaScript
+         * TV_SABR of another patch group / rvx TV (TVHTML5, game console). EXPERIMENTAL: this client needs the player JavaScript
          * (signature / "n" parameter) and may need a PoToken, so most videos will not play. Livestreams: not playable.
          */
         TV(7, "TVHTML5", "7.20260707.07.00",
@@ -258,15 +260,15 @@ public final class PlayerRoutes {
                 USER_AGENT_TV_PS4,
                 false),
         /**
-         * Morphe TV_DASH / rvx TV_LEGACY (TVHTML5 5.20150304, Samsung Tizen). EXPERIMENTAL: needs the player JavaScript.
-         * Morphe uses it for livestreams.
+         * TV_DASH of another patch group / rvx TV_LEGACY (TVHTML5 5.20150304, Samsung Tizen). EXPERIMENTAL: needs the player JavaScript.
+         * That group uses it for livestreams.
          */
         TV_LEGACY(7, "TVHTML5", "5.20150304",
                 "Samsung", "SmartTV", "Tizen", "2.4.0", 0,
                 USER_AGENT_TV_TIZEN,
                 false),
         /**
-         * Morphe / rvx TV_SIMPLY (TVHTML5_SIMPLY). EXPERIMENTAL: needs the player JavaScript and a PoToken when logged out.
+         * Another patch group / rvx TV_SIMPLY (TVHTML5_SIMPLY). EXPERIMENTAL: needs the player JavaScript and a PoToken when logged out.
          */
         TV_SIMPLY(75, "TVHTML5_SIMPLY", "1.1",
                 "Sony", "PS4", "PlayStation 4", "", 0,
