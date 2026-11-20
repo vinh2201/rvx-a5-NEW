@@ -144,3 +144,55 @@ internal val BytecodePatchContext.toolbarMenuMethodMatch by composingFirstMethod
 }
 
 // endregion
+
+// region Player menu (the "three dots" menu of the player)
+//
+// With a spoofed 20.x client the server sends the settings entries of the menu (quality, speed, captions, audio track, additional
+// settings) as rows of its own, whose commands this old app does not know: a tap only closes the menu. The click handler of the
+// menu is hooked so that such a row runs the click of the native row of the app that does the same (see PlayerMenuFixPatch).
+// The app has two variants of the menu (which one is used depends on a server flag); both are hooked.
+
+private const val PLAYER_OVERFLOW_CONTROLLER = "Lcom/google/android/apps/youtube/app/watch/bottomsheet/PlayerOverflowBottomSheetController;"
+
+/** True when the method calls a method of the controller of the player menu (it hands the command of a server row on). */
+private fun com.android.tools.smali.dexlib2.iface.Method.callsPlayerOverflowController(): Boolean =
+    implementation?.instructions?.any {
+        val reference = (it as? ReferenceInstruction)?.reference as? MethodReference
+        reference != null && reference.definingClass == PLAYER_OVERFLOW_CONTROLLER
+    } == true
+
+// Menu variant 1 (16.40.36: nwi.onItemClick): the row comes from the adapter of the list (iget adapter, check-cast, get row).
+internal val BytecodePatchContext.playerMenuItemClickMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
+    returnType("V")
+    parameterTypes("Landroid/widget/AdapterView;", "Landroid/view/View;", "I", "J")
+    opcodes(
+        Opcode.IGET_OBJECT, // list adapter
+        Opcode.CHECK_CAST,
+        Opcode.INVOKE_VIRTUAL, // row at the position
+        Opcode.MOVE_RESULT_OBJECT,
+        Opcode.INSTANCE_OF,
+    )
+    custom { callsPlayerOverflowController() }
+}
+
+// Menu variant 2 (16.40.36: nwl.onItemClick): the row comes from the ListView (iget list view, getAdapter, getItem).
+internal val BytecodePatchContext.playerMenuListViewItemClickMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
+    returnType("V")
+    parameterTypes("Landroid/widget/AdapterView;", "Landroid/view/View;", "I", "J")
+    opcodes(
+        Opcode.IGET_OBJECT, // list view
+        Opcode.IF_NEZ,
+        Opcode.RETURN_VOID,
+        Opcode.INVOKE_VIRTUAL, // getAdapter
+        Opcode.MOVE_RESULT_OBJECT,
+        Opcode.INVOKE_INTERFACE, // getItem
+        Opcode.MOVE_RESULT_OBJECT,
+        Opcode.CHECK_CAST,
+        Opcode.INSTANCE_OF,
+    )
+    custom { callsPlayerOverflowController() }
+}
+
+// endregion

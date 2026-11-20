@@ -177,7 +177,7 @@ public enum SettingsEnum {
     SPOOF_CLIENT_GENERAL("revanced_spoof_client_general", ClientType.ANDROID_VR.toString(), ReturnType.STRING, true),
     SPOOF_CLIENT_LIVESTREAM("revanced_spoof_client_livestream", ClientType.ANDROID_NO_SDK.toString(), ReturnType.STRING, true),
     SPOOF_CLIENT_SHORTS("revanced_spoof_client_shorts", ClientType.ANDROID_NO_SDK.toString(), ReturnType.STRING, true),
-    SPOOF_CLIENT_FALLBACK("revanced_spoof_client_fallback", ClientType.ANDROID_CREATOR.toString(), ReturnType.STRING, true),
+    SPOOF_CLIENT_FALLBACK("revanced_spoof_client_fallback", ClientType.ANDROID_NO_SDK.toString(), ReturnType.STRING, true),
     // Experiments for the videos that do not play (read at every request, no restart needed).
     SPOOF_CLIENT_LIVE_USER_AGENT("revanced_spoof_client_live_user_agent", true, ReturnType.BOOLEAN),
     SPOOF_CLIENT_SHORTS_AS_VIDEO("revanced_spoof_client_shorts_as_video", true, ReturnType.BOOLEAN),
