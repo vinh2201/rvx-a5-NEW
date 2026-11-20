@@ -18,7 +18,7 @@ import app.revanced.integrations.utils.SharedPrefHelper;
  * app itself: it stays on until the user turns it off in the settings.
  *
  * <p>
- * Presets worth knowing (from another patch group): 20.05.46 (recommended), 20.13.41 (restores the non collapsed action bar),
+ * Presets worth knowing (from community): 20.05.46 (recommended), 20.13.41 (restores the non collapsed action bar),
  * 20.20.42 (restores the old components filter), 21.11.48 (restores the old captions behavior).
  */
 public class VersionOverridePatch {
@@ -28,7 +28,7 @@ public class VersionOverridePatch {
     public static final String DEFAULT_TARGET = "20.05.46";
 
     /**
-     * Versions older than this do not work reliably any more (per another patch group), they are replaced with {@link #DEFAULT_TARGET}.
+     * Versions older than this do not work reliably any more (community), they are replaced with {@link #DEFAULT_TARGET}.
      */
     public static final String MINIMUM_TARGET = "20.02.34";
 
