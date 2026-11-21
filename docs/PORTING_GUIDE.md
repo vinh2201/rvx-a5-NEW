@@ -13,7 +13,7 @@ SCR = /tmp/claude-0/-home-claude/7cbb9026-938e-5723-9df1-1254581036c4/scratchpad
   - extension (Java/Kotlin runtime half): $PROJECT/extensions/youtube-rvxa5/src/main/java/app/revanced/integrations/...
 - REFERENCE (official ReVanced patches on patcher v22 — ground truth for syntax/imports!): $SCR/src/rv22/patches/src/main/kotlin/app/revanced
   (util already copied: $PROJECT/patches/src/main/kotlin/app/revanced/util/{BytecodeUtils,ResourceUtils,Utils,FreeRegisterProvider}.kt + util/resource/)
-- Other (RVX lineage, patcher 21 style = functional DSL already): $SCR/src/rv6 (YouTube 17.34.36). Community (own patcher, similar DSL, YouTube 19.16.39): $SCR/src/legacy-fork/revanced-patches-legacy-main
+- Other (RVX lineage, patcher 21 style = functional DSL already): $SCR/src/rv6 (YouTube 17.34.36). Community (own patcher, similar DSL, YouTube 19.16.39): $SCR/src/community/legacy-main
 - Decompiled APKs (apktool, smali + res): $SCR/apk/<dir>/  -> 16.40.36 is THE TARGET. Find with `ls $SCR/apk`. smali dirs: smali, smali_classes2, ...
 - Tools: lint: `python3 -I $SCR/tools/lint_kt.py $PROJECT/patches/src/main/kotlin <your dirs/files>`  (missing/unknown imports, redeclarations, leftover legacy API)
          syntax: `$SCR/tools/ktsyntax.sh <files...>` (prints Kotlin syntax errors only; ignore nothing it prints in YOUR files)

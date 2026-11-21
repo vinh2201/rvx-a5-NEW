@@ -17,9 +17,11 @@ import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.buildPla
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.createPlaybackSpeedMenuItemMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.createPlayerRequestBodyMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.createPlayerRequestBodyWithModelMethodMatch
+import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.formatSelectionMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.nerdsStatsVideoFormatBuilderMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.playerGestureConfigSyntheticMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.playerParameterBuilderMethodMatch
+import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.qualityListBuilderMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.setPlayerRequestClientTypeMethodMatch
 import app.revanced.shared.util.integrations.Constants.MISC_PATH
 import app.revanced.util.indexOfFirstInstructionOrThrow
@@ -38,6 +40,7 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "$MISC_PATH/SpoofClientPatch;"
+private const val FORMAT_SELECTION_LOG_CLASS_DESCRIPTOR = "$MISC_PATH/FormatSelectionLog;"
 
 /**
  * @return The first instance field that is written with the value of the register of the instruction at [sourceIndex]
@@ -415,6 +418,25 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
                 )
             }
         }
+
+        // endregion
+
+        // region Diagnostics: log what the format selector received and what it kept (no effect on playback).
+        // Why: with some clients the quality row says "Unavailable" because the quality list has fewer than two entries.
+        // p2..p5 of the selector are (formats, selector config, allowed itags, allowed itags); p1 and p3 of the list builder are
+        // (formats, caps). Both calls only read their arguments.
+
+        formatSelectionMethodMatch.method.addInstruction(
+            0,
+            "invoke-static/range { p2 .. p5 }, $FORMAT_SELECTION_LOG_CLASS_DESCRIPTOR->" +
+                "logFormatSelection(Ljava/util/Collection;Ljava/lang/Object;Ljava/util/Set;Ljava/util/Set;)V",
+        )
+
+        qualityListBuilderMethodMatch.method.addInstruction(
+            0,
+            "invoke-static { p1, p3 }, $FORMAT_SELECTION_LOG_CLASS_DESCRIPTOR->" +
+                "logQualityListInput(Ljava/util/List;Ljava/lang/Object;)V",
+        )
 
         // endregion
     }

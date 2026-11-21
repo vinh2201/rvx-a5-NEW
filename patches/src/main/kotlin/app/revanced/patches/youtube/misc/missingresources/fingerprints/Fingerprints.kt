@@ -50,7 +50,7 @@ internal val BytecodePatchContext.attributeResolverMethodMatch by composingFirst
     parameterTypes("Landroid/content/Context;", "I")
 }
 
-// Old (rv6 / other forks): legacyIconEnumConverterFingerprint (hardcoded class names Lajft; / Laqca;).
+// Old (rv6 / community): legacyIconEnumConverterFingerprint (hardcoded class names Lajft; / Laqca;).
 // The icon type enum (16.40.36: armu, proto number -> enum, 845 constants). Found by its enum constant names
 // (all three are full literals of the enum's static constructor, "TAB_ACTIVITY" is unique to this class).
 internal val BytecodePatchContext.iconTypeEnumMethodMatch by composingFirstMethod("TAB_ACTIVITY", "SEARCH", "NOTIFICATIONS") {

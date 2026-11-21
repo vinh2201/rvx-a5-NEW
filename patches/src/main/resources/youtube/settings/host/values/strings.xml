@@ -717,7 +717,7 @@ Side effects include:
 • Audio track menu is missing.
 • Some live streams are not supported for playback."</string>
     <string name="revanced_spoof_client_use_tv_title">TV (TVHTML5, experimental)</string>
-    <string name="revanced_spoof_client_use_tv_summary">"Spoof client to the TV web clients (TV, TV Legacy, TV Simply) of rvx and other forks.
+    <string name="revanced_spoof_client_use_tv_summary">"Spoof client to the TV web clients (TV, TV Legacy, TV Simply) of rvx and the community.
 
 Side effects include:
 • These clients need the player JavaScript to decrypt the streams (and may need a PoToken), which this app cannot do. Most videos will not play.

@@ -13,7 +13,7 @@ private const val SETTINGS_SHELL_ACTIVITY = "com.google.android.apps.youtube.app
 //
 // Merged from rv6 (17.34.36 names) and the community. Newer clients/servers look these names up by name
 // (Shorts action buttons, Cairo navigation icons, comment icons); the aliases point to the legacy artwork that 16.40.36 has.
-// PORT-NOTE: in 16.40.36 the following rv6 / other forks aliases have no target and are therefore skipped:
+// PORT-NOTE: in 16.40.36 the following rv6 / community aliases have no target and are therefore skipped:
 // remix (ic_remix_filled_white_*), sparkle (yt_fill_spark*), Shorts heart, shorts_creation_secondary_rounded_button_background.
 private val DRAWABLE_ALIASES: Map<String, List<String>> = linkedMapOf(
     // Cairo navigation / top bar icons.
