@@ -18,7 +18,7 @@ import app.revanced.integrations.requests.Route;
  * Routes and the client table used by "Spoof video streams".
  *
  * <p>
- * Client table: taken from ReVanced patches (v22) and another community, the values of rvx a6 were compared as well.
+ * Client table: taken from ReVanced patches (v22) and community, the values of rvx a6 were compared as well.
  * Only clients that return direct (non SABR, no PoToken, no JS player) DASH/progressive stream URLs are listed, since this old
  * app can play nothing else. Clients that stopped working were removed on purpose:
  * The values of "Android VR", "Android Studio", "visionOS" and "Android No SDK" were compared with rvx (inotia00).

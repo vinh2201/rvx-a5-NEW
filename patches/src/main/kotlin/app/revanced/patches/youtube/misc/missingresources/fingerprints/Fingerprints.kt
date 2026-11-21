@@ -148,21 +148,22 @@ internal val BytecodePatchContext.toolbarMenuMethodMatch by composingFirstMethod
 // region Player menu (the "three dots" menu of the player)
 //
 // With a spoofed 20.x client the server sends the settings entries of the menu (quality, speed, captions, audio track, additional
-// settings) as rows of its own, whose commands this old app does not know: a tap only closes the menu. The click handler of the
-// menu is hooked so that such a row runs the click of the native row of the app that does the same (see PlayerMenuFixPatch).
-// The app has two variants of the menu (which one is used depends on a server flag); both are hooked.
+// settings) as rows of its own, whose commands this old app does not know (a tap only closes the menu), and the app adds its own
+// native rows below them: the same entries twice. The patch only needs the two classes of the menu (the app has two variants, which
+// one is used depends on a server flag); the method that builds the adapter is found inside them from the two List fields.
+// The class is located here through its click handler, the only method that calls the controller of the menu.
 
 private const val PLAYER_OVERFLOW_CONTROLLER = "Lcom/google/android/apps/youtube/app/watch/bottomsheet/PlayerOverflowBottomSheetController;"
 
-/** True when the method calls a method of the controller of the player menu (it hands the command of a server row on). */
+/** True when the method calls a method of the controller of the player menu (only the two classes of the menu do). */
 private fun com.android.tools.smali.dexlib2.iface.Method.callsPlayerOverflowController(): Boolean =
     implementation?.instructions?.any {
         val reference = (it as? ReferenceInstruction)?.reference as? MethodReference
         reference != null && reference.definingClass == PLAYER_OVERFLOW_CONTROLLER
     } == true
 
-// Menu variant 1 (16.40.36: nwi.onItemClick): the row comes from the adapter of the list (iget adapter, check-cast, get row).
-internal val BytecodePatchContext.playerMenuItemClickMethodMatch by composingFirstMethod {
+// Menu variant 1 (16.40.36: class nwi, found by its onItemClick): the row comes from the adapter of the list (iget adapter, check-cast, get row).
+internal val BytecodePatchContext.playerMenuSheet1MethodMatch by composingFirstMethod {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
     returnType("V")
     parameterTypes("Landroid/widget/AdapterView;", "Landroid/view/View;", "I", "J")
@@ -176,8 +177,8 @@ internal val BytecodePatchContext.playerMenuItemClickMethodMatch by composingFir
     custom { callsPlayerOverflowController() }
 }
 
-// Menu variant 2 (16.40.36: nwl.onItemClick): the row comes from the ListView (iget list view, getAdapter, getItem).
-internal val BytecodePatchContext.playerMenuListViewItemClickMethodMatch by composingFirstMethod {
+// Menu variant 2 (16.40.36: class nwl, found by its onItemClick): the row comes from the ListView (iget list view, getAdapter, getItem).
+internal val BytecodePatchContext.playerMenuSheet2MethodMatch by composingFirstMethod {
     accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
     returnType("V")
     parameterTypes("Landroid/widget/AdapterView;", "Landroid/view/View;", "I", "J")

@@ -285,14 +285,6 @@ public class TopBarButtonsPatch {
         startActivity(intent);
     }
 
-    /**
-     * Opens the settings of the app (same as the gear button). Used by {@link PlayerMenuFixPatch} for the
-     * "additional settings" row of the player menu.
-     */
-    public static void openAppSettings() {
-        openSettings();
-    }
-
     private static void openSettings() {
         if (openSettingsWithController()) return;
 

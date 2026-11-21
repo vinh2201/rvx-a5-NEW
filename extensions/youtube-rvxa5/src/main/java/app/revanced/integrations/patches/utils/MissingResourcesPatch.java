@@ -27,7 +27,7 @@ public final class MissingResourcesPatch {
      * <p>
      * Why: for an unknown number the lookup returns null -> UNKNOWN -> drawable id 0, which showed the wrong icon.
      * rv6 mapped only home/shorts/subscriptions; the top-bar bell/search/create/settings icons were missing.
-     * The mapping of those icons is taken from community.
+     * The mapping of those icons is taken from the legacy branch of community.
      *
      * @param iconType icon type number sent by the server.
      * @return the icon type number to use.
