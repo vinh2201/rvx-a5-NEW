@@ -9,6 +9,7 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -94,6 +95,158 @@ public class SpoofClientPatch {
     }
 
     /**
+     * A player request that is sent like the official ReVanced patches send it (see
+     * {@link ClientType#officialStyleRequest}). Decided once per request by {@link #beginRequest} and used by the
+     * hooks of the same call of the request builder (same thread).
+     */
+    private static final class OfficialStyleRequest {
+        final ClientType client;
+        final String url;
+        final byte[] body;
+
+        OfficialStyleRequest(ClientType client, String url, byte[] body) {
+            this.client = client;
+            this.url = url;
+            this.body = body;
+        }
+    }
+
+    private static final ThreadLocal<OfficialStyleRequest> pendingOfficialStyleRequest = new ThreadLocal<>();
+
+    private static volatile String lastLoggedOfficialStyleRequest = "";
+
+    /**
+     * Injection point: start of the request builder of the data source (every request of the app passes it).
+     * <p>
+     * The player request of the app is a protobuf body signed as the YouTube app (key and signature in the URL, the
+     * "Spatula" header, all headers of the app). The Android VR family answers it with HTTP 400 "Request contains an
+     * invalid argument" (the player shows "There was a problem with the server [400]"), while the same client is accepted
+     * when the request is sent the way the official ReVanced patches send it. So for these clients the whole request is
+     * replaced here: URL ({@code ?alt=proto}: the answer is still the protobuf the app reads), body (JSON with the client
+     * fields and the video id) and headers (see {@link #overrideRequestHeaders}).
+     *
+     * @param uri  URI of the request.
+     * @param body body of the request (null for GET requests).
+     */
+    public static void beginRequest(Uri uri, byte[] body) {
+        pendingOfficialStyleRequest.set(null);
+
+        if (!SPOOF_CLIENT_ENABLED || uri == null || body == null) {
+            return;
+        }
+
+        try {
+            String path = uri.getPath();
+            if (path == null || !path.endsWith("/youtubei/v1/player")) {
+                return;
+            }
+
+            ClientType client = getSpoofClientType();
+            if (!client.officialStyleRequest) {
+                return;
+            }
+
+            String videoId = currentVideoId;
+            if (!isVideoId(videoId) || !containsAscii(body, videoId)) {
+                // The request is not the one of the last video the app asked for: keep it as the app made it.
+                LogHelper.info(SpoofClientPatch.class, "Player request not rewritten: the video id of the request is not "
+                        + videoId);
+                return;
+            }
+
+            String url = uri.buildUpon().clearQuery().appendQueryParameter("alt", "proto").build().toString();
+            byte[] newBody = client.innerTubeBody.replace("%s", videoId).getBytes(StandardCharsets.UTF_8);
+
+            pendingOfficialStyleRequest.set(new OfficialStyleRequest(client, url, newBody));
+
+            String text = client.name() + "|" + videoId;
+            if (!text.equals(lastLoggedOfficialStyleRequest)) {
+                lastLoggedOfficialStyleRequest = text;
+                LogHelper.info(SpoofClientPatch.class, "Player request sent like the official patches: client="
+                        + client.name() + " video=" + videoId + " body=" + newBody.length + " bytes (app body "
+                        + body.length + " bytes), url=" + url);
+            }
+        } catch (Exception ex) {
+            pendingOfficialStyleRequest.set(null);
+        }
+    }
+
+    /**
+     * Injection point: the body of the request, right before it is given to the network stack.
+     */
+    public static byte[] overrideRequestBody(byte[] original) {
+        OfficialStyleRequest pending = pendingOfficialStyleRequest.get();
+        if (pending == null || original == null) {
+            return original;
+        }
+
+        pendingOfficialStyleRequest.set(null);
+        return pending.body;
+    }
+
+    private static boolean isVideoId(String text) {
+        if (text == null || text.length() != 11) return false;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            boolean valid = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_';
+            if (!valid) return false;
+        }
+        return true;
+    }
+
+    private static boolean containsAscii(byte[] data, String text) {
+        int length = text.length();
+        outer:
+        for (int start = 0; start + length <= data.length; start++) {
+            for (int i = 0; i < length; i++) {
+                if (data[start + i] != (byte) text.charAt(i)) continue outer;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * The headers of an official style request: what the client sends plus the visitor id (and the API format version) of
+     * the app. Nothing else of the app (signature, key, language, ...) is sent.
+     */
+    private static void applyOfficialStyleHeaders(Map<String, String> headers, ClientType client) {
+        String visitorId = null;
+        String apiFormatVersion = null;
+        String authorization = null;
+
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            String name = header.getKey();
+            if (name == null) continue;
+
+            if (name.equalsIgnoreCase("X-Goog-Visitor-Id")) {
+                visitorId = header.getValue();
+            } else if (name.equalsIgnoreCase("X-GOOG-API-FORMAT-VERSION")) {
+                apiFormatVersion = header.getValue();
+            } else if (name.equalsIgnoreCase("Authorization")) {
+                authorization = header.getValue();
+            }
+        }
+
+        headers.clear();
+        headers.put("Content-Type", "application/json");
+        headers.put("User-Agent", client.userAgent);
+        headers.put("X-YouTube-Client-Name", String.valueOf(client.id));
+        headers.put("X-YouTube-Client-Version", client.version);
+
+        if (visitorId != null && !visitorId.isEmpty()) {
+            headers.put("X-Goog-Visitor-Id", visitorId);
+        }
+        if (apiFormatVersion != null && !apiFormatVersion.isEmpty()) {
+            headers.put("X-GOOG-API-FORMAT-VERSION", apiFormatVersion);
+        }
+        if (client.useAuth && authorization != null && !authorization.isEmpty()) {
+            headers.put("Authorization", authorization);
+        }
+    }
+
+    /**
      * Injection point.
      *
      * Blocks /initplayback requests.
@@ -101,6 +254,11 @@ public class SpoofClientPatch {
     public static String blockInitPlaybackRequest(String originalUrlString) {
         if (SPOOF_CLIENT_ENABLED) {
             try {
+                OfficialStyleRequest pending = pendingOfficialStyleRequest.get();
+                if (pending != null) {
+                    return pending.url;
+                }
+
                 Uri originalUri = Uri.parse(originalUrlString);
                 String path = originalUri.getPath();
 
@@ -288,6 +446,14 @@ public class SpoofClientPatch {
 
             String path = uri.getPath();
             if (path == null || !path.endsWith("/youtubei/v1/player")) {
+                return;
+            }
+
+            OfficialStyleRequest pending = pendingOfficialStyleRequest.get();
+            if (pending != null) {
+                // The visitor id was remembered above, from the headers the app made.
+                applyOfficialStyleHeaders(headers, pending.client);
+                logRequestHeaderNames(headers);
                 return;
             }
 

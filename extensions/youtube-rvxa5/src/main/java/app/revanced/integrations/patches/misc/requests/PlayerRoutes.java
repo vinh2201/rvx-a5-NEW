@@ -35,7 +35,8 @@ public final class PlayerRoutes {
             "player" +
                     "?fields=playabilityStatus.status," +
                     "playabilityStatus.reason," +
-                    "videoDetails.isLive" +
+                    "videoDetails.isLive," +
+                    "responseContext.visitorData" +
                     "&prettyPrint=false"
     ).compile();
 
@@ -313,6 +314,13 @@ public final class PlayerRoutes {
          * If the authorization of the app (when logged in) is sent with the request.
          */
         public final boolean useAuth;
+        /**
+         * The Android VR / XR family: the server answers the request of the app (a protobuf body signed as the YouTube
+         * app, with the key / signature of the app and all its headers) with HTTP 400 "Request contains an invalid
+         * argument". For these clients the request is sent like the official ReVanced patches send it (JSON body with only
+         * the client fields and the video id, the headers of the client plus the visitor id, {@code alt=proto}).
+         */
+        public final boolean officialStyleRequest;
 
         /**
          * Android client.
@@ -353,6 +361,7 @@ public final class PlayerRoutes {
                     sdk < 0 ? Build.VERSION.SDK_INT : sdk);
             this.userAgent = userAgent;
             this.useAuth = useAuth;
+            this.officialStyleRequest = "ANDROID_VR".equals(clientName);
         }
     }
 }

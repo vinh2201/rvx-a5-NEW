@@ -147,6 +147,39 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
                         move-result-object v$targetRegister
                     """,
                 )
+
+                // 3. The body of the request (the last read of the byte[] body field of the request, right before it is
+                //    given to the network stack). The Android VR family needs a different body, see SpoofClientPatch.beginRequest.
+                val bodyGetIndex = findInstructionIndicesReversedOrThrow {
+                    opcode == Opcode.IGET_OBJECT &&
+                            fieldReference?.let { it.definingClass == uriField.definingClass && it.type == "[B" } == true
+                }.first()
+                val bodyField = getInstruction(bodyGetIndex).fieldReference
+                    ?: throw PatchException("Could not find the body field of the request")
+                val bodyRegister = getInstruction<TwoRegisterInstruction>(bodyGetIndex).registerA
+
+                if (bodyRegister > 15) {
+                    throw PatchException("Register of the request body is not usable by invoke-static: $bodyRegister")
+                }
+
+                addInstructions(
+                    bodyGetIndex + 1,
+                    """
+                        invoke-static { v$bodyRegister }, $EXTENSION_CLASS_DESCRIPTOR->overrideRequestBody([B)[B
+                        move-result-object v$bodyRegister
+                    """,
+                )
+
+                // 4. (index 0, done last) Tell the extension which request is being built (URI and body).
+                //    v0 and v1 are not used yet at the start of the method (the original code assigns them later).
+                addInstructions(
+                    0,
+                    """
+                        iget-object v0, v$requestRegister, $uriField
+                        iget-object v1, v$requestRegister, $bodyField
+                        invoke-static { v0, v1 }, $EXTENSION_CLASS_DESCRIPTOR->beginRequest(Landroid/net/Uri;[B)V
+                    """,
+                )
             }
         }
 
