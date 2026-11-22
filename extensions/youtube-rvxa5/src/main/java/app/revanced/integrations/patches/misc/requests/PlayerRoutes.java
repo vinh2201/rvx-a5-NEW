@@ -315,10 +315,13 @@ public final class PlayerRoutes {
          */
         public final boolean useAuth;
         /**
-         * The Android VR / XR family: the server answers the request of the app (a protobuf body signed as the YouTube
-         * app, with the key / signature of the app and all its headers) with HTTP 400 "Request contains an invalid
-         * argument". For these clients the request is sent like the official ReVanced patches send it (JSON body with only
-         * the client fields and the video id, the headers of the client plus the visitor id, {@code alt=proto}).
+         * Every client except the plain Android client (id 3, which is what this app itself is). The app's own player
+         * request is a protobuf body signed as the YouTube app (key and signature in the URL, the "Spatula" header, all
+         * headers of the app, {@code X-YouTube-Client-Name: 3}); the server answers it with HTTP 400 "Request contains an
+         * invalid argument" when the body declares another client (confirmed on device for Android VR and Android TV).
+         * For these clients the request is sent like the official ReVanced patches send it (JSON body with only the client
+         * fields and the video id, the headers of the client plus the visitor id and, when the client needs the account,
+         * the authorization of the app, {@code alt=proto}).
          */
         public final boolean officialStyleRequest;
 
@@ -361,7 +364,7 @@ public final class PlayerRoutes {
                     sdk < 0 ? Build.VERSION.SDK_INT : sdk);
             this.userAgent = userAgent;
             this.useAuth = useAuth;
-            this.officialStyleRequest = "ANDROID_VR".equals(clientName);
+            this.officialStyleRequest = id != 3; // 3 = the plain Android client: the request of the app itself fits it
         }
     }
 }

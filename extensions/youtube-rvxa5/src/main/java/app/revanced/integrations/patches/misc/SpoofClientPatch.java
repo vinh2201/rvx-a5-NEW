@@ -119,10 +119,11 @@ public class SpoofClientPatch {
      * here, the {@code /player} request is the one that matters.
      * <p>
      * The player request of the app is a protobuf body signed as the YouTube app (key and signature in the URL, the
-     * "Spatula" header, all headers of the app). The Android VR family answers it with HTTP 400 "Request contains an
-     * invalid argument" (the player shows "There was a problem with the server [400]"), while the same client is accepted
-     * when the request is sent the way the official ReVanced patches send it. So for these clients the whole request is
-     * replaced: headers (here, in place), URL ({@code ?alt=proto}: the answer is still the protobuf the app reads, see
+     * "Spatula" header, all headers of the app, client 3). When the body declares another client (Android VR, Android TV,
+     * ...) the server answers it with HTTP 400 "Request contains an invalid argument" (the player shows "There was a
+     * problem with the server [400]"), while the same client is accepted when the request is sent the way the official
+     * ReVanced patches send it (confirmed on device). So for these clients (see {@link ClientType#officialStyleRequest})
+     * the whole request is replaced: headers (here, in place), URL ({@code ?alt=proto}: the answer is still the protobuf the app reads, see
      * {@link #overridePlayerRequestUrl}) and body (JSON with the client fields and the video id, see
      * {@link #overridePlayerRequestBody}).
      *
