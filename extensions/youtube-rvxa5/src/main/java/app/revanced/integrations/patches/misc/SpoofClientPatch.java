@@ -16,6 +16,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import app.revanced.integrations.patches.misc.requests.PlayerRoutes;
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes.ClientType;
 import app.revanced.integrations.settings.SettingsEnum;
 import app.revanced.integrations.utils.LogHelper;
@@ -42,6 +43,11 @@ public class SpoofClientPatch {
      */
     private static final String UNREACHABLE_HOST_URI_STRING = "https://127.0.0.0";
     private static final Uri UNREACHABLE_HOST_URI = Uri.parse(UNREACHABLE_HOST_URI_STRING);
+
+    /**
+     * Client id of the plain Android client, which is the client this app itself is.
+     */
+    private static final int APP_OWN_CLIENT_ID = 3;
 
     /**
      * Last spoofed client type.
@@ -265,6 +271,8 @@ public class SpoofClientPatch {
         }
 
         try {
+            rememberVisitorId(headers);
+
             String host = uri.getHost();
             if (host != null && host.endsWith("googlevideo.com")) {
                 // Requests of the streams (segments, HLS/DASH manifests). The stream URLs of a client carry its name
@@ -295,8 +303,51 @@ public class SpoofClientPatch {
                 removeHeader(headers, "X-Goog-PageId");
                 removeHeader(headers, "X-Goog-AuthUser");
             }
+
+            if (client.id != APP_OWN_CLIENT_ID) {
+                // The app signs its requests as the YouTube app ("Spatula"). That fits the client the app itself is,
+                // but it contradicts any other client (for example Android VR), and the official ReVanced patches
+                // send none of the headers of the app for these clients.
+                removeHeader(headers, "X-Goog-YTSpatula");
+            }
+
+            logRequestHeaderNames(headers);
         } catch (Exception ex) {
             // Logger.printException(() -> "overrideRequestHeaders failure", ex);
+        }
+    }
+
+    private static volatile String lastLoggedHeaderNames = "";
+
+    /**
+     * Diagnostics: the NAMES (never the values) of the headers of the player request, once per change.
+     */
+    private static void logRequestHeaderNames(Map<String, String> headers) {
+        java.util.TreeSet<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (String name : headers.keySet()) {
+            if (name != null) names.add(name);
+        }
+
+        String text = names.toString();
+        if (!text.equals(lastLoggedHeaderNames)) {
+            lastLoggedHeaderNames = text;
+            LogHelper.info(SpoofClientPatch.class, "Player request headers: " + text);
+        }
+    }
+
+    /**
+     * The visitor id of the app is sent with the playability check ({@link PlayerRoutes#visitorId}).
+     */
+    private static void rememberVisitorId(Map<String, String> headers) {
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            String name = header.getKey();
+            if (name != null && name.equalsIgnoreCase("X-Goog-Visitor-Id")) {
+                String value = header.getValue();
+                if (value != null && !value.isEmpty()) {
+                    PlayerRoutes.visitorId = value;
+                }
+                return;
+            }
         }
     }
 

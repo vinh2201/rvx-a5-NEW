@@ -34,6 +34,7 @@ public final class PlayerRoutes {
             Route.Method.POST,
             "player" +
                     "?fields=playabilityStatus.status," +
+                    "playabilityStatus.reason," +
                     "videoDetails.isLive" +
                     "&prettyPrint=false"
     ).compile();
@@ -49,6 +50,13 @@ public final class PlayerRoutes {
             "Mozilla/5.0 (PS4; Leanback Shell) Gecko/20100101 Firefox/65.0 LeanbackShell/01.00.01.75 Sony PS4/ (PS4, , no, CH)";
     private static final String USER_AGENT_TV_TIZEN =
             "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/2.4.0 TV Safari/538.1";
+
+    /**
+     * Visitor id of the app (header {@code X-Goog-Visitor-Id} of its own requests), set by {@code SpoofClientPatch}.
+     * The playability check is sent with it: without it the server can answer a logged out client with an error
+     * that the real request of the app (which carries the visitor id) does not get.
+     */
+    public static volatile String visitorId = "";
 
     private PlayerRoutes() {
     }
@@ -107,7 +115,7 @@ public final class PlayerRoutes {
                 + " (Linux; U; Android " + osVersion
                 + "; " + Locale.getDefault()
                 + "; " + model
-                + "; Build/" + buildId + ") gzip";
+                + "; Build/" + buildId + ")";
     }
 
     public static HttpURLConnection getPlayerResponseConnectionFromRoute(Route.CompiledRoute route,
@@ -119,6 +127,11 @@ public final class PlayerRoutes {
         // "Client-Name" is the client type id.
         connection.setRequestProperty("X-YouTube-Client-Name", String.valueOf(clientType.id));
         connection.setRequestProperty("X-YouTube-Client-Version", clientType.version);
+
+        String visitor = visitorId;
+        if (visitor != null && !visitor.isEmpty()) {
+            connection.setRequestProperty("X-Goog-Visitor-Id", visitor);
+        }
 
         connection.setUseCaches(false);
         connection.setDoOutput(true);

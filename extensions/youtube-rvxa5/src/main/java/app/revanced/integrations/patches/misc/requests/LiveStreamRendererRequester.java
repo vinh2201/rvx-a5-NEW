@@ -62,6 +62,29 @@ public class LiveStreamRendererRequester {
         return null;
     }
 
+    /**
+     * "status / reason" of the playability status, for the log only.
+     */
+    private static String describePlayabilityStatus(@NonNull JSONObject playerResponse) {
+        try {
+            JSONObject playabilityStatus = playerResponse.getJSONObject("playabilityStatus");
+
+            String status = "?";
+            String reason = "-";
+            try {
+                status = playabilityStatus.getString("status");
+            } catch (JSONException ignored) {
+            }
+            try {
+                reason = playabilityStatus.getString("reason");
+            } catch (JSONException ignored) {
+            }
+            return status + " / " + reason;
+        } catch (JSONException e) {
+            return "no playabilityStatus";
+        }
+    }
+
     private static boolean isPlayabilityStatusOk(@NonNull JSONObject playerResponse) {
         try {
             return playerResponse.getJSONObject("playabilityStatus").getString("status").equals("OK");
@@ -111,6 +134,12 @@ public class LiveStreamRendererRequester {
             final boolean isPlayabilityOk = isPlayabilityStatusOk(playerResponse);
             final boolean isLiveStream = isLiveStream(playerResponse);
 
+            // Kept in the log: a check that wrongly says "not playable" sends the video to the client of the
+            // "Unplayable video" setting (with fewer qualities).
+            LogHelper.info(LiveStreamRendererRequester.class, "Playability check: video=" + videoId
+                    + " client=" + clientName + " status=" + describePlayabilityStatus(playerResponse)
+                    + " live=" + isLiveStream);
+
             LiveStreamRenderer renderer = new LiveStreamRenderer(
                     videoId,
                     clientName,
@@ -127,24 +156,26 @@ public class LiveStreamRendererRequester {
         return null;
     }
 
+    /**
+     * The other logged out VR client, used when the first one could not be reached or did not say "playable".
+     */
+    private static ClientType otherCheckClient(@NonNull ClientType clientType) {
+        return clientType == ClientType.ANDROID_VR_PICO ? ClientType.ANDROID_VR : ClientType.ANDROID_VR_PICO;
+    }
+
     @Nullable
     public static LiveStreamRenderer getLiveStreamRenderer(@NonNull String videoId, @NonNull ClientType clientType) {
         Objects.requireNonNull(videoId);
 
         LiveStreamRenderer renderer = getLiveStreamRendererUsingBody(videoId, clientType);
-        if (renderer == null) {
-            // String finalClientName1 = clientType.name();
-            // Logger.printDebug(() -> videoId + " not available using " + finalClientName1 + " client");
-
-            // The first client could not be reached (or returned an error), try another logged out client.
-            clientType = (clientType == ClientType.ANDROID_VR_PICO)
-                    ? ClientType.ANDROID_VR
-                    : ClientType.ANDROID_VR_PICO;
-            renderer = getLiveStreamRendererUsingBody(videoId, clientType);
-            // if (renderer == null) {
-                // String finalClientName2 = clientType.name();
-                // Logger.printDebug(() -> videoId + " not available using " + finalClientName2 + " client");
-            // }
+        if (renderer == null || !renderer.playabilityOk) {
+            // The first client could not be reached (or returned an error), or it did not say "playable": ask another
+            // logged out client before the video is declared unplayable (the answer decides which client plays it, and
+            // the clients of the "Unplayable video" setting give fewer qualities).
+            LiveStreamRenderer other = getLiveStreamRendererUsingBody(videoId, otherCheckClient(clientType));
+            if (other != null && (renderer == null || other.playabilityOk)) {
+                renderer = other;
+            }
         }
 
         return renderer;

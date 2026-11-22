@@ -18,7 +18,7 @@ import app.revanced.integrations.utils.LogHelper;
  * log lines show what the selector received and what it kept, so the reason can be read from the log of one video
  * (tag <code>revanced: FormatSelectionLog</code>) instead of guessed:
  * <ul>
- * <li><code>Format selection input</code>: every format of the response (itag, quality id, quality label, video only,
+ * <li><code>Format selection input</code>: every format of the response (itag, quality id, quality label, has video,
  * size, fps), the allowed itag sets given to the selector and the numeric fields of the selector configuration;</li>
  * <li><code>Quality list input</code>: the formats that were left for the quality list and the caps that were applied.</li>
  * </ul>
@@ -100,7 +100,7 @@ public final class FormatSelectionLog {
                 builder.append("null");
                 continue;
             }
-            // e = itag, f = quality id, u = quality label, P = video only, i = width, d = height, c = frame rate.
+            // e = itag, f = quality id, u = quality label, P = has a video stream (true also for muxed formats), i = width, d = height, c = frame rate.
             builder.append(call(format, "e")).append('/')
                     .append(call(format, "f")).append('/')
                     .append(call(format, "u")).append('/')
