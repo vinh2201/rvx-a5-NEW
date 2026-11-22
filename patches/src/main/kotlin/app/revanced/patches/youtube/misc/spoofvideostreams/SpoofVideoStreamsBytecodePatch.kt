@@ -23,6 +23,7 @@ import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.playerGe
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.playerParameterBuilderMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.qualityListBuilderMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.setPlayerRequestClientTypeMethodMatch
+import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.volleyPlayerRequestMethodMatch
 import app.revanced.shared.util.integrations.Constants.MISC_PATH
 import app.revanced.util.indexOfFirstInstructionOrThrow
 import app.revanced.util.indexOfFirstInstructionReversedOrThrow
@@ -147,37 +148,72 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
                         move-result-object v$targetRegister
                     """,
                 )
+            }
+        }
 
-                // 3. The body of the request (the last read of the byte[] body field of the request, right before it is
-                //    given to the network stack). The Android VR family needs a different body, see SpoofClientPatch.beginRequest.
-                val bodyGetIndex = findInstructionIndicesReversedOrThrow {
-                    opcode == Opcode.IGET_OBJECT &&
-                            fieldReference?.let { it.definingClass == uriField.definingClass && it.type == "[B" } == true
-                }.first()
-                val bodyField = getInstruction(bodyGetIndex).fieldReference
-                    ?: throw PatchException("Could not find the body field of the request")
-                val bodyRegister = getInstruction<TwoRegisterInstruction>(bodyGetIndex).registerA
+        // endregion
 
-                if (bodyRegister > 15) {
-                    throw PatchException("Register of the request body is not usable by invoke-static: $bodyRegister")
+        // region The /player request of this app (Volley request -> Cronet request, yyi.a()).
+        //
+        // The hooks above are in the Cronet data source of the media player (awa.o): they see the requests of the streams,
+        // never the /player request. That one is a Volley request (aauz) that yyi.a() turns into a Cronet request: the
+        // URL string, the headers (a HashMap filled with the headers of the request) and the body are all in registers
+        // right before the request builder is created. The Android VR family answers the app's own request with HTTP 400,
+        // so for these clients the extension replaces URL, headers and body there (SpoofClientPatch.beginPlayerRequest).
+
+        volleyPlayerRequestMethodMatch.let { match ->
+            with(match.method) {
+                // The headers: the only Map.putAll call of the method (adds the headers of the request to the HashMap).
+                val putAllIndex = indexOfFirstInstructionOrThrow {
+                    opcode == Opcode.INVOKE_INTERFACE &&
+                            methodReference?.let { it.definingClass == "Ljava/util/Map;" && it.name == "putAll" } == true
+                }
+                val headersRegister = getInstruction<FiveRegisterInstruction>(putAllIndex).registerC
+
+                // The body: the result of the only call of the method that returns byte[] (Request.getBody()).
+                val bodyCallIndex = indexOfFirstInstructionOrThrow {
+                    (opcode == Opcode.INVOKE_VIRTUAL || opcode == Opcode.INVOKE_INTERFACE) &&
+                            methodReference?.returnType == "[B"
+                }
+                val bodyMoveIndex = bodyCallIndex + 1
+                if (getInstruction(bodyMoveIndex).opcode != Opcode.MOVE_RESULT_OBJECT) {
+                    throw PatchException("The body of the request is not stored right after it is read")
+                }
+                val bodyRegister = getInstruction<OneRegisterInstruction>(bodyMoveIndex).registerA
+
+                // The URL: the first argument of CronetEngine.newUrlRequestBuilder(String, Callback, Executor).
+                val builderIndex = indexOfFirstInstructionOrThrow {
+                    opcode == Opcode.INVOKE_VIRTUAL &&
+                            methodReference?.let { it.name == "newUrlRequestBuilder" && it.parameterTypes.size == 3 } == true
+                }
+                val urlRegister = getInstruction<FiveRegisterInstruction>(builderIndex).registerD
+
+                if (putAllIndex > bodyCallIndex || bodyMoveIndex > builderIndex) {
+                    throw PatchException("Unexpected order of the headers, the body and the request builder")
+                }
+
+                // The headers and the body must be in consecutive registers (invoke-static/range), the URL is copied
+                // to the register after them. In 16.40.36 the method has 19 locals, v17 is first assigned further down.
+                val scratchRegister = bodyRegister + 1
+                val localRegisters = implementation!!.registerCount - (parameterTypes.size + 1)
+                if (bodyRegister != headersRegister + 1 || scratchRegister >= localRegisters ||
+                    scratchRegister == urlRegister || urlRegister > 15
+                ) {
+                    throw PatchException(
+                        "Registers of the player request are not as expected: headers=$headersRegister body=$bodyRegister " +
+                                "url=$urlRegister locals=$localRegisters"
+                    )
                 }
 
                 addInstructions(
-                    bodyGetIndex + 1,
+                    bodyMoveIndex + 1,
                     """
-                        invoke-static { v$bodyRegister }, $EXTENSION_CLASS_DESCRIPTOR->overrideRequestBody([B)[B
+                        move-object/from16 v$scratchRegister, v$urlRegister
+                        invoke-static/range { v$headersRegister .. v$scratchRegister }, $EXTENSION_CLASS_DESCRIPTOR->beginPlayerRequest(Ljava/util/Map;[BLjava/lang/String;)V
+                        invoke-static/range { v$scratchRegister .. v$scratchRegister }, $EXTENSION_CLASS_DESCRIPTOR->overridePlayerRequestUrl(Ljava/lang/String;)Ljava/lang/String;
+                        move-result-object v$urlRegister
+                        invoke-static/range { v$bodyRegister .. v$bodyRegister }, $EXTENSION_CLASS_DESCRIPTOR->overridePlayerRequestBody([B)[B
                         move-result-object v$bodyRegister
-                    """,
-                )
-
-                // 4. (index 0, done last) Tell the extension which request is being built (URI and body).
-                //    v0 and v1 are not used yet at the start of the method (the original code assigns them later).
-                addInstructions(
-                    0,
-                    """
-                        iget-object v0, v$requestRegister, $uriField
-                        iget-object v1, v$requestRegister, $bodyField
-                        invoke-static { v0, v1 }, $EXTENSION_CLASS_DESCRIPTOR->beginRequest(Landroid/net/Uri;[B)V
                     """,
                 )
             }

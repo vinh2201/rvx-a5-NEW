@@ -96,16 +96,14 @@ public class SpoofClientPatch {
 
     /**
      * A player request that is sent like the official ReVanced patches send it (see
-     * {@link ClientType#officialStyleRequest}). Decided once per request by {@link #beginRequest} and used by the
-     * hooks of the same call of the request builder (same thread).
+     * {@link ClientType#officialStyleRequest}). Decided once per request by {@link #beginPlayerRequest} and used by the
+     * next two hooks of the same request (same thread, called one after the other).
      */
     private static final class OfficialStyleRequest {
-        final ClientType client;
         final String url;
         final byte[] body;
 
-        OfficialStyleRequest(ClientType client, String url, byte[] body) {
-            this.client = client;
+        OfficialStyleRequest(String url, byte[] body) {
             this.url = url;
             this.body = body;
         }
@@ -116,28 +114,40 @@ public class SpoofClientPatch {
     private static volatile String lastLoggedOfficialStyleRequest = "";
 
     /**
-     * Injection point: start of the request builder of the data source (every request of the app passes it).
+     * Injection point: the Volley request of the app ({@code yyi.a()}), after the app has put the headers and the body
+     * of the request together and right before the network request is created. Every Volley request of the app passes
+     * here, the {@code /player} request is the one that matters.
      * <p>
      * The player request of the app is a protobuf body signed as the YouTube app (key and signature in the URL, the
      * "Spatula" header, all headers of the app). The Android VR family answers it with HTTP 400 "Request contains an
      * invalid argument" (the player shows "There was a problem with the server [400]"), while the same client is accepted
      * when the request is sent the way the official ReVanced patches send it. So for these clients the whole request is
-     * replaced here: URL ({@code ?alt=proto}: the answer is still the protobuf the app reads), body (JSON with the client
-     * fields and the video id) and headers (see {@link #overrideRequestHeaders}).
+     * replaced: headers (here, in place), URL ({@code ?alt=proto}: the answer is still the protobuf the app reads, see
+     * {@link #overridePlayerRequestUrl}) and body (JSON with the client fields and the video id, see
+     * {@link #overridePlayerRequestBody}).
      *
-     * @param uri  URI of the request.
-     * @param body body of the request (null for GET requests).
+     * @param headers headers of the request (changed in place).
+     * @param body    body of the request as the app made it.
+     * @param url     URL of the request as the app made it.
      */
-    public static void beginRequest(Uri uri, byte[] body) {
+    public static void beginPlayerRequest(Map<String, String> headers, byte[] body, String url) {
         pendingOfficialStyleRequest.set(null);
 
-        if (!SPOOF_CLIENT_ENABLED || uri == null || body == null) {
+        if (!SPOOF_CLIENT_ENABLED || headers == null || url == null) {
             return;
         }
 
         try {
+            Uri uri = Uri.parse(url);
             String path = uri.getPath();
             if (path == null || !path.endsWith("/youtubei/v1/player")) {
+                return;
+            }
+
+            // The visitor id of the app (sent with the playability check, see PlayerRoutes.visitorId).
+            rememberVisitorId(headers);
+
+            if (body == null) {
                 return;
             }
 
@@ -146,42 +156,115 @@ public class SpoofClientPatch {
                 return;
             }
 
-            String videoId = currentVideoId;
-            if (!isVideoId(videoId) || !containsAscii(body, videoId)) {
-                // The request is not the one of the last video the app asked for: keep it as the app made it.
-                LogHelper.info(SpoofClientPatch.class, "Player request not rewritten: the video id of the request is not "
-                        + videoId);
+            String videoId = findVideoId(body);
+            if (videoId == null) {
+                LogHelper.info(SpoofClientPatch.class, "Player request not rewritten: no video id in the body ("
+                        + body.length + " bytes)");
                 return;
             }
 
-            String url = uri.buildUpon().clearQuery().appendQueryParameter("alt", "proto").build().toString();
+            String newUrl = uri.buildUpon().clearQuery().appendQueryParameter("alt", "proto").build().toString();
             byte[] newBody = client.innerTubeBody.replace("%s", videoId).getBytes(StandardCharsets.UTF_8);
 
-            pendingOfficialStyleRequest.set(new OfficialStyleRequest(client, url, newBody));
+            applyOfficialStyleHeaders(headers, client);
+            pendingOfficialStyleRequest.set(new OfficialStyleRequest(newUrl, newBody));
+
+            logRequestHeaderNames(headers);
 
             String text = client.name() + "|" + videoId;
             if (!text.equals(lastLoggedOfficialStyleRequest)) {
                 lastLoggedOfficialStyleRequest = text;
                 LogHelper.info(SpoofClientPatch.class, "Player request sent like the official patches: client="
                         + client.name() + " video=" + videoId + " body=" + newBody.length + " bytes (app body "
-                        + body.length + " bytes), url=" + url);
+                        + body.length + " bytes), url=" + newUrl);
             }
         } catch (Exception ex) {
             pendingOfficialStyleRequest.set(null);
+            LogHelper.info(SpoofClientPatch.class, "Player request not rewritten: " + ex);
         }
     }
 
     /**
-     * Injection point: the body of the request, right before it is given to the network stack.
+     * Injection point: the URL of the request (after {@link #beginPlayerRequest}).
      */
-    public static byte[] overrideRequestBody(byte[] original) {
+    public static String overridePlayerRequestUrl(String original) {
         OfficialStyleRequest pending = pendingOfficialStyleRequest.get();
-        if (pending == null || original == null) {
+        return pending == null ? original : pending.url;
+    }
+
+    /**
+     * Injection point: the body of the request (after {@link #overridePlayerRequestUrl}).
+     */
+    public static byte[] overridePlayerRequestBody(byte[] original) {
+        OfficialStyleRequest pending = pendingOfficialStyleRequest.get();
+        if (pending == null) {
             return original;
         }
 
         pendingOfficialStyleRequest.set(null);
         return pending.body;
+    }
+
+    /**
+     * The video id of a player request: the video of the last request the app made, or (a request of another video, for
+     * example a prefetch) the 11 character string field of the protobuf body.
+     */
+    @Nullable
+    private static String findVideoId(byte[] body) {
+        String videoId = currentVideoId;
+        if (isVideoId(videoId) && containsAscii(body, videoId)) {
+            return videoId;
+        }
+
+        String found = null;
+        int[] pos = {0};
+        while (pos[0] < body.length) {
+            long tag = readVarint(body, pos);
+            if (tag < 0) return found;
+
+            int wireType = (int) (tag & 7);
+            long field = tag >>> 3;
+            if (wireType == 0) {
+                if (readVarint(body, pos) < 0) return found;
+            } else if (wireType == 1) {
+                pos[0] += 8;
+            } else if (wireType == 5) {
+                pos[0] += 4;
+            } else if (wireType == 2) {
+                long length = readVarint(body, pos);
+                if (length < 0 || length > body.length - pos[0]) return found;
+
+                if (length == 11) {
+                    String text = new String(body, pos[0], 11, StandardCharsets.US_ASCII);
+                    if (isVideoId(text)) {
+                        if (field == 2) return text;
+                        if (found == null) found = text;
+                    }
+                }
+                pos[0] += (int) length;
+            } else {
+                return found;
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Reads a protobuf varint at {@code pos[0]} (moves it), -1 when the data ends or the value is not valid.
+     */
+    private static long readVarint(byte[] data, int[] pos) {
+        long result = 0;
+        int shift = 0;
+        while (pos[0] < data.length && shift < 64) {
+            int b = data[pos[0]++] & 0xFF;
+            result |= (long) (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) {
+                return result < 0 ? -1 : result;
+            }
+            shift += 7;
+        }
+        return -1;
     }
 
     private static boolean isVideoId(String text) {
@@ -254,11 +337,6 @@ public class SpoofClientPatch {
     public static String blockInitPlaybackRequest(String originalUrlString) {
         if (SPOOF_CLIENT_ENABLED) {
             try {
-                OfficialStyleRequest pending = pendingOfficialStyleRequest.get();
-                if (pending != null) {
-                    return pending.url;
-                }
-
                 Uri originalUri = Uri.parse(originalUrlString);
                 String path = originalUri.getPath();
 
@@ -446,14 +524,6 @@ public class SpoofClientPatch {
 
             String path = uri.getPath();
             if (path == null || !path.endsWith("/youtubei/v1/player")) {
-                return;
-            }
-
-            OfficialStyleRequest pending = pendingOfficialStyleRequest.get();
-            if (pending != null) {
-                // The visitor id was remembered above, from the headers the app made.
-                applyOfficialStyleHeaders(headers, pending.client);
-                logRequestHeaderNames(headers);
                 return;
             }
 

@@ -11,6 +11,7 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 // All fingerprints below were checked against the 16.40.36 smali (every one resolves to exactly one method):
 //   buildInitPlaybackRequestMethodMatch          -> awa.o(Laub;)UrlRequest$Builder        (Cronet request builder)
+//   volleyPlayerRequestMethodMatch               -> yyi.a()V                               (Volley request -> Cronet request: URL, headers, body)
 //   buildPlayerRequestUriMethodMatch             -> aauz.t()String                         (player request URI)
 //   setPlayerRequestClientTypeMethodMatch        -> aeqm.b(Lasel;Laepm;String)Lasej;       (client info of the "10.29" client)
 //   createPlayerRequestBodyMethodMatch           -> aiqc.c()V                              (player request body)
@@ -39,6 +40,18 @@ internal val BytecodePatchContext.buildInitPlaybackRequestMethodMatch by composi
         Opcode.MOVE_RESULT_OBJECT,
         Opcode.IGET_OBJECT, // Moves the request URI string to a register to build the request with.
     )
+}
+
+// The Volley -> Cronet bridge of the app (yyi.a()V in 16.40.36). This is where the /player request of this app is turned
+// into a network request: the URL string, the headers (HashMap, filled with the headers of the request) and the body
+// (Request.getBody()) are all in registers here. The awa.o hook above only sees the requests of the media data source
+// (streams), never the /player request. "If-None-Match" is only used by this method (checked against the smali).
+internal val BytecodePatchContext.volleyPlayerRequestMethodMatch by composingFirstMethod(
+    "If-None-Match",
+    "If-Modified-Since",
+) {
+    returnType("V")
+    parameterTypes()
 }
 
 // Old: BuildPlayerRequestURIFingerprint ("key" and "asig" are full literals).
