@@ -13,6 +13,9 @@ private const val SETTINGS_SHELL_ACTIVITY = "com.google.android.apps.youtube.app
 //
 // Merged from rv6 (17.34.36 names) and the community. Newer clients/servers look these names up by name
 // (Shorts action buttons, Cairo navigation icons, comment icons); the aliases point to the legacy artwork that 16.40.36 has.
+// All 33 "*cairo*" drawables of 20.05.46 / 21.07.240 were compared with this version: the ones with a counterpart are aliased
+// here. Without a counterpart (skipped): yt_fill_*/yt_outline_maximize|screen_full_cairo_* (16.40.36 only has white ones),
+// live_chat_trash_icon_background_highlighted_cairo.
 // PORT-NOTE: in 16.40.36 the following rv6 / community aliases have no target and are therefore skipped:
 // remix (ic_remix_filled_white_*), sparkle (yt_fill_spark*), Shorts heart, shorts_creation_secondary_rounded_button_background.
 private val DRAWABLE_ALIASES: Map<String, List<String>> = linkedMapOf(
@@ -38,6 +41,19 @@ private val DRAWABLE_ALIASES: Map<String, List<String>> = linkedMapOf(
     "yt_outline_gear_cairo_black_24" to listOf("yt_outline_gear_black_24"),
     "yt_outline_share_cairo_black_24" to listOf("yt_outline_share_black_24"),
     "yt_outline_arrow_left_cairo_black_24" to listOf("yt_outline_arrow_left_black_24", "yt_outline_arrow_left_white_24"),
+    "yt_outline_add_cairo_black_24" to listOf("yt_outline_add_black_24"),
+    "yt_fill_add_cairo_black_24" to listOf("yt_outline_add_black_24"),
+    "yt_fill_add_cairo_black_16" to listOf("yt_outline_add_black_24"),
+    "yt_outline_chevron_right_cairo_black_24" to listOf("yt_outline_chevron_right_black_24"),
+    "yt_outline_x_cairo_black_24" to listOf("yt_outline_x_black_24"),
+    "ic_creation_tab_large_with_cairo_circle" to listOf("yt_outline_add_circle_black_36", "ic_add_circle_white"),
+    "ic_search_tab_large_with_cairo_circle" to listOf("ic_search_large"),
+    "youtube_premium_standalone_cairo" to listOf("youtube_premium_standalone"),
+    "ic_outlined_media_route_cairo" to listOf("ic_outlined_media_route"),
+    "ic_outlined_media_route_outline_checked_cairo" to listOf("ic_outlined_media_route_outline_checked"),
+    "channel_list_sub_item_live_cairo" to listOf("channel_list_sub_item_live"),
+    "new_content_count_background_cairo" to listOf("new_content_count_background"),
+    "new_content_dot_background_cairo" to listOf("new_content_dot_background"),
 
     // Shorts action buttons (names requested by newer server-side layouts).
     "youtube_shorts_like_outline_32dp" to listOf("ic_right_like_off_shadowed", "ic_right_like_off_32c"),

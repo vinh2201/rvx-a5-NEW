@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import app.revanced.integrations.patches.misc.requests.PlayerRequestProbe;
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes;
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes.ClientType;
 import app.revanced.integrations.settings.SettingsEnum;
@@ -171,6 +172,12 @@ public class SpoofClientPatch {
             pendingOfficialStyleRequest.set(new OfficialStyleRequest(newUrl, newBody));
 
             logRequestHeaderNames(headers);
+
+            if (client.useAuth) {
+                // Diagnostics: the status of a few variants of this request is written to the log (see the class).
+                PlayerRequestProbe.runOnce(client.name() + "|" + videoId, headers, newUrl, newBody, client.version,
+                        client == ClientType.ANDROID_UNPLUGGED ? "10.30.1" : null);
+            }
 
             String text = client.name() + "|" + videoId;
             if (!text.equals(lastLoggedOfficialStyleRequest)) {
