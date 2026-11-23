@@ -168,7 +168,6 @@ public class SpoofClientPatch {
             String newUrl = uri.buildUpon().clearQuery().appendQueryParameter("alt", "proto").build().toString();
             byte[] newBody = client.innerTubeBody.replace("%s", videoId).getBytes(StandardCharsets.UTF_8);
 
-            logAppRequestHeaderNames(headers);
             applyOfficialStyleHeaders(headers, client);
             pendingOfficialStyleRequest.set(new OfficialStyleRequest(newUrl, newBody));
 
@@ -307,7 +306,6 @@ public class SpoofClientPatch {
         String visitorId = null;
         String apiFormatVersion = null;
         String authorization = null;
-        String pageId = null;
 
         for (Map.Entry<String, String> header : headers.entrySet()) {
             String name = header.getKey();
@@ -319,8 +317,6 @@ public class SpoofClientPatch {
                 apiFormatVersion = header.getValue();
             } else if (name.equalsIgnoreCase("Authorization")) {
                 authorization = header.getValue();
-            } else if (name.equalsIgnoreCase("X-Goog-PageId")) {
-                pageId = header.getValue(); // brand account (rvx a6 sends it with the authorization)
             }
         }
 
@@ -338,9 +334,6 @@ public class SpoofClientPatch {
         }
         if (client.useAuth && authorization != null && !authorization.isEmpty()) {
             headers.put("Authorization", authorization);
-            if (pageId != null && !pageId.isEmpty()) {
-                headers.put("X-Goog-PageId", pageId);
-            }
         }
     }
 
@@ -569,23 +562,6 @@ public class SpoofClientPatch {
     }
 
     private static volatile String lastLoggedHeaderNames = "";
-    private static volatile String lastLoggedAppHeaderNames = "";
-
-    /**
-     * Diagnostics: the NAMES (never the values) of the headers of the player request as the app made it, once per change.
-     */
-    private static void logAppRequestHeaderNames(Map<String, String> headers) {
-        java.util.TreeSet<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        for (String name : headers.keySet()) {
-            if (name != null) names.add(name);
-        }
-
-        String text = names.toString();
-        if (!text.equals(lastLoggedAppHeaderNames)) {
-            lastLoggedAppHeaderNames = text;
-            LogHelper.info(SpoofClientPatch.class, "Player request headers of the app: " + text);
-        }
-    }
 
     /**
      * Diagnostics: the NAMES (never the values) of the headers of the player request, once per change.

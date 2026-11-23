@@ -9,9 +9,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import app.revanced.integrations.requests.Requester;
 import app.revanced.integrations.requests.Route;
@@ -65,13 +63,10 @@ public final class PlayerRoutes {
     }
 
     /**
-     * @param sdk                0 if not applicable (the field is not sent).
-     * @param gmscoreVersionCode GmsCore version code of the client (rvx a6 sends it, together with the time zone, only for the
-     *                           clients that need the account: Android TV and Android Studio), or null.
+     * @param sdk 0 if not applicable (the field is not sent).
      */
     private static String createInnerTubeBody(String clientName, String version, String make, String model,
-                                              String osName, String osVersion, int sdk,
-                                              String gmscoreVersionCode) {
+                                              String osName, String osVersion, int sdk) {
         JSONObject innerTubeBody = new JSONObject();
 
         try {
@@ -90,20 +85,12 @@ public final class PlayerRoutes {
             client.put("osVersion", osVersion);
             if (sdk > 0) {
                 client.put("androidSdkVersion", sdk);
-                if (gmscoreVersionCode != null) {
-                    client.put("gmscoreVersionCode", gmscoreVersionCode);
-                }
             }
             if (language != null && !language.isEmpty()) {
                 client.put("hl", language);
             }
             if (country != null && !country.isEmpty()) {
                 client.put("gl", country);
-            }
-            if (gmscoreVersionCode != null) {
-                TimeZone timeZone = TimeZone.getDefault();
-                client.put("timeZone", timeZone.getID());
-                client.put("utcOffsetMinutes", String.valueOf(timeZone.getOffset(new Date().getTime()) / 60000));
             }
 
             context.put("client", client);
@@ -212,7 +199,7 @@ public final class PlayerRoutes {
         ANDROID_CREATOR(14, "ANDROID_CREATOR",
                 "com.google.android.apps.youtube.creator", "26.10.000",
                 "Google", "Pixel 10 Pro XL", "Android", "16", 36, "BD3A.251005.003.W3",
-                true, "262833029"),
+                true),
         /**
          * rvx a6 ANDROID_UNPLUGGED ("Android TV", Google TV Streamer).
          * Version of the YouTube TV app (com.google.android.apps.youtube.unplugged): 10.46.1, the newest one found on
@@ -222,7 +209,7 @@ public final class PlayerRoutes {
         ANDROID_UNPLUGGED(29, "ANDROID_UNPLUGGED",
                 "com.google.android.apps.youtube.unplugged", "10.46.1",
                 "Google", "Google TV Streamer", "Android", "14", 34, "UTTK.241210.003",
-                true, "262833019"),
+                true),
         /**
          * rvx ANDROID_NO_SDK ("Android No SDK"): the default client of rvx. The Android client (id 3) with a recent version,
          * without device make/model and without Android SDK version (the field is sent as 0).
@@ -328,10 +315,6 @@ public final class PlayerRoutes {
          */
         public final boolean useAuth;
         /**
-         * GmsCore version code sent in the client info (with the time zone), or null (not sent).
-         */
-        public final String gmscoreVersionCode;
-        /**
          * Every client except the plain Android client (id 3, which is what this app itself is). The app's own player
          * request is a protobuf body signed as the YouTube app (key and signature in the URL, the "Spatula" header, all
          * headers of the app, {@code X-YouTube-Client-Name: 3}); the server answers it with HTTP 400 "Request contains an
@@ -348,15 +331,6 @@ public final class PlayerRoutes {
         ClientType(int id, String clientName, String packageName, String version,
                    String make, String model, String osName, String osVersion, int sdk, String buildId,
                    boolean useAuth) {
-            this(id, clientName, packageName, version, make, model, osName, osVersion, sdk, buildId, useAuth, null);
-        }
-
-        /**
-         * Android client that sends the GmsCore version code and the time zone.
-         */
-        ClientType(int id, String clientName, String packageName, String version,
-                   String make, String model, String osName, String osVersion, int sdk, String buildId,
-                   boolean useAuth, String gmscoreVersionCode) {
             this(id, clientName, version, make, model, osName, osVersion, sdk,
                     buildId == null
                             ? packageName + "/" + version + " (Linux; U; Android "
@@ -364,7 +338,7 @@ public final class PlayerRoutes {
                             : createAndroidUserAgent(packageName, version,
                             osVersion != null ? osVersion : Build.VERSION.RELEASE,
                             model != null ? model : Build.MODEL, buildId),
-                    useAuth, gmscoreVersionCode);
+                    useAuth);
         }
 
         /**
@@ -373,12 +347,6 @@ public final class PlayerRoutes {
         ClientType(int id, String clientName, String version,
                    String make, String model, String osName, String osVersion, int sdk,
                    String userAgent, boolean useAuth) {
-            this(id, clientName, version, make, model, osName, osVersion, sdk, userAgent, useAuth, null);
-        }
-
-        ClientType(int id, String clientName, String version,
-                   String make, String model, String osName, String osVersion, int sdk,
-                   String userAgent, boolean useAuth, String gmscoreVersionCode) {
             this.friendlyName = str("revanced_spoof_client_options_entry_" + name().toLowerCase(Locale.ENGLISH));
             this.id = id;
             this.clientName = clientName;
@@ -393,11 +361,9 @@ public final class PlayerRoutes {
                     model != null ? model : Build.MODEL,
                     osName != null ? osName : "Android",
                     osVersion != null ? osVersion : Build.VERSION.RELEASE,
-                    sdk < 0 ? Build.VERSION.SDK_INT : sdk,
-                    gmscoreVersionCode);
+                    sdk < 0 ? Build.VERSION.SDK_INT : sdk);
             this.userAgent = userAgent;
             this.useAuth = useAuth;
-            this.gmscoreVersionCode = gmscoreVersionCode;
             this.officialStyleRequest = id != 3; // 3 = the plain Android client: the request of the app itself fits it
         }
     }
