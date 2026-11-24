@@ -305,7 +305,6 @@
             <Preference android:title="@string/revanced_spoof_client_use_android_no_sdk_title" android:key="revanced_spoof_client_use_android_no_sdk" android:selectable="false" android:summary="@string/revanced_spoof_client_use_android_no_sdk_summary" android:dependency="revanced_spoof_client" />
             <Preference android:title="@string/revanced_spoof_client_use_android_reel_title" android:key="revanced_spoof_client_use_android_reel" android:selectable="false" android:summary="@string/revanced_spoof_client_use_android_reel_summary" android:dependency="revanced_spoof_client" />
             <Preference android:title="@string/revanced_spoof_client_use_visionos_title" android:key="revanced_spoof_client_use_visionos" android:selectable="false" android:summary="@string/revanced_spoof_client_use_visionos_summary" android:dependency="revanced_spoof_client" />
-            <Preference android:title="@string/revanced_spoof_client_use_android_tv_title" android:key="revanced_spoof_client_use_android_tv" android:selectable="false" android:summary="@string/revanced_spoof_client_use_android_tv_summary" android:dependency="revanced_spoof_client" />
             <Preference android:title="@string/revanced_spoof_client_use_tv_title" android:key="revanced_spoof_client_use_tv" android:selectable="false" android:summary="@string/revanced_spoof_client_use_tv_summary" android:dependency="revanced_spoof_client" />
         </PreferenceScreen>SETTINGS: SPOOF_CLIENT -->
 

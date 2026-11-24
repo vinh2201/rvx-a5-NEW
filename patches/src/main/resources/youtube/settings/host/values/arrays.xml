@@ -6,7 +6,6 @@
         <item>@string/revanced_spoof_client_options_entry_android_vr_pico</item>
         <item>@string/revanced_spoof_client_options_entry_android_xr</item>
         <item>@string/revanced_spoof_client_options_entry_android_creator</item>
-        <item>@string/revanced_spoof_client_options_entry_android_unplugged</item>
         <item>@string/revanced_spoof_client_options_entry_android_no_sdk</item>
         <item>@string/revanced_spoof_client_options_entry_android_no_sdk_auth</item>
         <item>@string/revanced_spoof_client_options_entry_android_reel</item>
@@ -25,7 +24,6 @@
         <item>ANDROID_VR_PICO</item>
         <item>ANDROID_XR</item>
         <item>ANDROID_CREATOR</item>
-        <item>ANDROID_UNPLUGGED</item>
         <item>ANDROID_NO_SDK</item>
         <item>ANDROID_NO_SDK_AUTH</item>
         <item>ANDROID_REEL</item>
@@ -47,7 +45,6 @@
         <item>@string/revanced_spoof_client_options_entry_android_xr</item>
         <item>@string/revanced_spoof_client_options_entry_visionos</item>
         <item>@string/revanced_spoof_client_options_entry_visionos_1_02</item>
-        <item>@string/revanced_spoof_client_options_entry_android_unplugged</item>
         <item>@string/revanced_spoof_client_options_entry_android_creator</item>
         <item>@string/revanced_spoof_client_options_entry_android_reel</item>
         <item>@string/revanced_spoof_client_options_entry_android_reel_no_auth</item>
@@ -66,7 +63,6 @@
         <item>ANDROID_XR</item>
         <item>VISIONOS</item>
         <item>VISIONOS_1_02</item>
-        <item>ANDROID_UNPLUGGED</item>
         <item>ANDROID_CREATOR</item>
         <item>ANDROID_REEL</item>
         <item>ANDROID_REEL_NO_AUTH</item>
@@ -86,7 +82,6 @@
         <item>@string/revanced_spoof_client_options_entry_android_vr_pico</item>
         <item>@string/revanced_spoof_client_options_entry_android_xr</item>
         <item>@string/revanced_spoof_client_options_entry_android_creator</item>
-        <item>@string/revanced_spoof_client_options_entry_android_unplugged</item>
         <item>@string/revanced_spoof_client_options_entry_visionos</item>
         <item>@string/revanced_spoof_client_options_entry_visionos_1_02</item>
         <item>@string/revanced_spoof_client_options_entry_android_vr_a14</item>
@@ -105,7 +100,6 @@
         <item>ANDROID_VR_PICO</item>
         <item>ANDROID_XR</item>
         <item>ANDROID_CREATOR</item>
-        <item>ANDROID_UNPLUGGED</item>
         <item>VISIONOS</item>
         <item>VISIONOS_1_02</item>
         <item>ANDROID_VR_A14</item>
@@ -116,7 +110,6 @@
     </string-array>
     <string-array name="revanced_spoof_client_fallback_options_entries">
         <item>@string/revanced_spoof_client_options_entry_android_creator</item>
-        <item>@string/revanced_spoof_client_options_entry_android_unplugged</item>
         <item>@string/revanced_spoof_client_options_entry_android_no_sdk_auth</item>
         <item>@string/revanced_spoof_client_options_entry_android_xr</item>
         <item>@string/revanced_spoof_client_options_entry_android_vr_pico</item>
@@ -135,7 +128,6 @@
     </string-array>
     <string-array name="revanced_spoof_client_fallback_options_entry_values">
         <item>ANDROID_CREATOR</item>
-        <item>ANDROID_UNPLUGGED</item>
         <item>ANDROID_NO_SDK_AUTH</item>
         <item>ANDROID_XR</item>
         <item>ANDROID_VR_PICO</item>

@@ -17,7 +17,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import app.revanced.integrations.patches.misc.requests.PlayerRequestProbe;
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes;
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes.ClientType;
 import app.revanced.integrations.settings.SettingsEnum;
@@ -112,16 +111,14 @@ public class SpoofClientPatch {
 
     private static final ThreadLocal<OfficialStyleRequest> pendingOfficialStyleRequest = new ThreadLocal<>();
 
-    private static volatile String lastLoggedOfficialStyleRequest = "";
-
     /**
      * Injection point: the Volley request of the app ({@code yyi.a()}), after the app has put the headers and the body
      * of the request together and right before the network request is created. Every Volley request of the app passes
      * here, the {@code /player} request is the one that matters.
      * <p>
      * The player request of the app is a protobuf body signed as the YouTube app (key and signature in the URL, the
-     * "Spatula" header, all headers of the app, client 3). When the body declares another client (Android VR, Android TV,
-     * ...) the server answers it with HTTP 400 "Request contains an invalid argument" (the player shows "There was a
+     * "Spatula" header, all headers of the app, client 3). When the body declares another client (Android VR, Android
+     * Studio, ...) the server answers it with HTTP 400 "Request contains an invalid argument" (the player shows "There was a
      * problem with the server [400]"), while the same client is accepted when the request is sent the way the official
      * ReVanced patches send it (confirmed on device). So for these clients (see {@link ClientType#officialStyleRequest})
      * the whole request is replaced: headers (here, in place), URL ({@code ?alt=proto}: the answer is still the protobuf the app reads, see
@@ -160,8 +157,6 @@ public class SpoofClientPatch {
 
             String videoId = findVideoId(body);
             if (videoId == null) {
-                LogHelper.info(SpoofClientPatch.class, "Player request not rewritten: no video id in the body ("
-                        + body.length + " bytes)");
                 return;
             }
 
@@ -170,25 +165,9 @@ public class SpoofClientPatch {
 
             applyOfficialStyleHeaders(headers, client);
             pendingOfficialStyleRequest.set(new OfficialStyleRequest(newUrl, newBody));
-
-            logRequestHeaderNames(headers);
-
-            if (client.useAuth) {
-                // Diagnostics: the status of a few variants of this request is written to the log (see the class).
-                PlayerRequestProbe.runOnce(client.name() + "|" + videoId, headers, newUrl, newBody, client.version,
-                        client == ClientType.ANDROID_UNPLUGGED ? "10.30.1" : null);
-            }
-
-            String text = client.name() + "|" + videoId;
-            if (!text.equals(lastLoggedOfficialStyleRequest)) {
-                lastLoggedOfficialStyleRequest = text;
-                LogHelper.info(SpoofClientPatch.class, "Player request sent like the official patches: client="
-                        + client.name() + " video=" + videoId + " body=" + newBody.length + " bytes (app body "
-                        + body.length + " bytes), url=" + newUrl);
-            }
         } catch (Exception ex) {
             pendingOfficialStyleRequest.set(null);
-            LogHelper.info(SpoofClientPatch.class, "Player request not rewritten: " + ex);
+            LogHelper.printException(SpoofClientPatch.class, "Player request not rewritten", ex);
         }
     }
 
@@ -368,53 +347,30 @@ public class SpoofClientPatch {
     private static ClientType getSpoofClientType() {
         boolean live = false;
         ClientType type;
-        String reason;
 
         if (isShortsOrClips) {
             type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_SHORTS);
-            reason = "shorts";
         } else {
             LiveStreamRenderer renderer = getRenderer(false);
             if (renderer != null && renderer.isLive) {
                 type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_LIVESTREAM);
                 live = true;
-                reason = "live";
             } else if (renderer != null && !renderer.playabilityOk) {
                 type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_FALLBACK);
-                reason = "unplayable";
             } else {
                 type = getClientTypeFromSettingsEnum(SettingsEnum.SPOOF_CLIENT_GENERAL);
-                reason = renderer == null ? "general (renderer unknown)" : "general";
             }
         }
 
         lastRequestWasLive = live;
         lastSpoofedClientType = type;
-        logClientChoice(type, reason);
         return type;
     }
 
     /**
-     * Logs the client used for a video once per change (logcat tag "revanced"), so a failing video can be traced.
-     */
-    private static volatile String lastLoggedChoice = "";
-
-    /**
-     * Video id of the last player request (for the log only).
+     * Video id of the last player request ({@link #setPlayerResponseVideoId}).
      */
     private static volatile String currentVideoId = "";
-
-    private static void logClientChoice(ClientType type, String reason) {
-        try {
-            String choice = currentVideoId + "|" + type.name() + "|" + reason;
-            if (!choice.equals(lastLoggedChoice)) {
-                lastLoggedChoice = choice;
-                LogHelper.info(SpoofClientPatch.class, "Spoof client: " + type.name() + " (" + reason + ") video="
-                        + currentVideoId + " id=" + type.id + " version=" + type.version);
-            }
-        } catch (Throwable ignored) {
-        }
-    }
 
     /**
      * Injection point.
@@ -554,28 +510,8 @@ public class SpoofClientPatch {
                 // send none of the headers of the app for these clients.
                 removeHeader(headers, "X-Goog-YTSpatula");
             }
-
-            logRequestHeaderNames(headers);
         } catch (Exception ex) {
             // Logger.printException(() -> "overrideRequestHeaders failure", ex);
-        }
-    }
-
-    private static volatile String lastLoggedHeaderNames = "";
-
-    /**
-     * Diagnostics: the NAMES (never the values) of the headers of the player request, once per change.
-     */
-    private static void logRequestHeaderNames(Map<String, String> headers) {
-        java.util.TreeSet<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        for (String name : headers.keySet()) {
-            if (name != null) names.add(name);
-        }
-
-        String text = names.toString();
-        if (!text.equals(lastLoggedHeaderNames)) {
-            lastLoggedHeaderNames = text;
-            LogHelper.info(SpoofClientPatch.class, "Player request headers: " + text);
         }
     }
 

@@ -20,8 +20,7 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 //   playerGestureConfigSyntheticMethodMatch      -> olt.a(Object)V / ong.a(Object)V
 //   createPlaybackSpeedMenuItemMethodMatch       -> aidh.c([Lawcz;)V
 //   playerParameterBuilderMethodMatch            -> aiqa.b(...)Laiqc;
-//   formatSelectionMethodMatch                   -> aein.c(PlayerConfigModel,Collection,...)Laeii;   (diagnostics)
-//   qualityListBuilderMethodMatch                -> aein.n(List,String,Laeil)VideoQuality[]          (diagnostics)
+//   formatSelectionMethodMatch                   -> aein.c(PlayerConfigModel,Collection,...)Laeii;   (H.264 quality ladder)
 
 private fun Method.referencesBuildField(definingClass: String, name: String): Boolean =
     implementation?.instructions?.any {
@@ -197,7 +196,7 @@ internal val BytecodePatchContext.playerParameterBuilderMethodMatch by composing
     )
 }
 
-// region Diagnostics of the quality list (FormatSelectionLog; no effect on playback)
+// region Format selector of the app (H.264 quality ladder)
 
 // The format selector of the app: it receives the formats of the player response and the player config and decides which
 // formats are usable. Public final, 10 parameters, the first one is the PlayerConfigModel.
@@ -216,13 +215,6 @@ internal val BytecodePatchContext.formatSelectionMethodMatch by composingFirstMe
         "L",
         "L",
     )
-}
-
-// The method that turns the usable formats into the quality list (VideoQuality[]; one entry per quality label).
-internal val BytecodePatchContext.qualityListBuilderMethodMatch by composingFirstMethod {
-    accessFlags(AccessFlags.PRIVATE, AccessFlags.FINAL)
-    returnType("[Lcom/google/android/libraries/youtube/innertube/model/media/VideoQuality;")
-    parameterTypes("Ljava/util/List;", "Ljava/lang/String;", "L")
 }
 
 // endregion

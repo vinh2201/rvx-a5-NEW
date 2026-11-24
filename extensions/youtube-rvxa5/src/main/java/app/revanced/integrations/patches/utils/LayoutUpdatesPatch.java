@@ -155,7 +155,6 @@ public final class LayoutUpdatesPatch {
                 SettingsEnum.LAYOUT_CONFIG_RECOVERING.saveValue(false);
             }
 
-            LogHelper.info(LayoutUpdatesPatch.class, "App version is spoofed: the stored layout configuration is ignored");
             return true;
         }
 
@@ -164,7 +163,6 @@ public final class LayoutUpdatesPatch {
                 // First start without spoof: ignore the stored configuration once. The server now answers
                 // with a configuration for this app version, which replaces the tainted one.
                 SettingsEnum.LAYOUT_CONFIG_RECOVERING.saveValue(true);
-                LogHelper.info(LayoutUpdatesPatch.class, "Spoof switched off: ignoring the tainted layout configuration once");
                 return true;
             }
 

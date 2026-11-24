@@ -98,7 +98,6 @@ public class TopBarButtonsPatch {
     public static void onPivotTabSelected(String tabId) {
         try {
             String newTabId = tabId == null ? "" : tabId;
-            LogHelper.info(TopBarButtonsPatch.class, "Pivot tab selected: " + newTabId);
 
             if (newTabId.equals(selectedTabId)) return;
 
@@ -120,7 +119,6 @@ public class TopBarButtonsPatch {
             boolean isTabRoot = navigationMode == 0;
             if (isTabRoot == atTabRoot) return;
 
-            LogHelper.info(TopBarButtonsPatch.class, "Page is the root of a tab: " + isTabRoot);
             atTabRoot = isTabRoot;
             refreshAllMenus();
         } catch (Exception ex) {
@@ -263,7 +261,6 @@ public class TopBarButtonsPatch {
             return icon;
         }
 
-        LogHelper.info(TopBarButtonsPatch.class, "Icon not found: " + names[0]);
         return null;
     }
 
@@ -310,7 +307,6 @@ public class TopBarButtonsPatch {
             Activity activity = findActivity(controller);
             if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                 // The controller belongs to an activity that is gone.
-                LogHelper.info(TopBarButtonsPatch.class, "Settings controller is stale");
                 settingsMenuController = null;
                 return false;
             }

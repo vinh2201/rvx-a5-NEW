@@ -201,16 +201,6 @@ public final class PlayerRoutes {
                 "Google", "Pixel 10 Pro XL", "Android", "16", 36, "BD3A.251005.003.W3",
                 true),
         /**
-         * rvx a6 ANDROID_UNPLUGGED ("Android TV", Google TV Streamer).
-         * Version of the YouTube TV app (com.google.android.apps.youtube.unplugged): 10.46.1, the newest one found on
-         * APKMirror on 2026-11-19 (it was 10.30.1 before). The device values (Google TV Streamer, Android 14) are unchanged.
-         * Requires login.
-         */
-        ANDROID_UNPLUGGED(29, "ANDROID_UNPLUGGED",
-                "com.google.android.apps.youtube.unplugged", "10.46.1",
-                "Google", "Google TV Streamer", "Android", "14", 34, "UTTK.241210.003",
-                true),
-        /**
          * rvx ANDROID_NO_SDK ("Android No SDK"): the default client of rvx. The Android client (id 3) with a recent version,
          * without device make/model and without Android SDK version (the field is sent as 0).
          * Video not playable: none. Logged out. The best candidate for livestreams.
@@ -318,7 +308,7 @@ public final class PlayerRoutes {
          * Every client except the plain Android client (id 3, which is what this app itself is). The app's own player
          * request is a protobuf body signed as the YouTube app (key and signature in the URL, the "Spatula" header, all
          * headers of the app, {@code X-YouTube-Client-Name: 3}); the server answers it with HTTP 400 "Request contains an
-         * invalid argument" when the body declares another client (confirmed on device for Android VR and Android TV).
+         * invalid argument" when the body declares another client (confirmed on device for Android VR).
          * For these clients the request is sent like the official ReVanced patches send it (JSON body with only the client
          * fields and the video id, the headers of the client plus the visitor id and, when the client needs the account,
          * the authorization of the app, {@code alt=proto}).

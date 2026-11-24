@@ -21,7 +21,6 @@ import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.formatSe
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.nerdsStatsVideoFormatBuilderMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.playerGestureConfigSyntheticMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.playerParameterBuilderMethodMatch
-import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.qualityListBuilderMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.setPlayerRequestClientTypeMethodMatch
 import app.revanced.patches.youtube.misc.spoofvideostreams.fingerprints.volleyPlayerRequestMethodMatch
 import app.revanced.shared.util.integrations.Constants.MISC_PATH
@@ -41,7 +40,6 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "$MISC_PATH/SpoofClientPatch;"
-private const val FORMAT_SELECTION_LOG_CLASS_DESCRIPTOR = "$MISC_PATH/FormatSelectionLog;"
 private const val AVC_QUALITY_LADDER_CLASS_DESCRIPTOR = "$MISC_PATH/AvcQualityLadder;"
 
 /**
@@ -491,10 +489,8 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
 
         // endregion
 
-        // region Quality list: keep the H.264 ladder selectable, and log what the format selector received and kept.
+        // region Quality list: keep the H.264 ladder selectable.
         // Why: with some clients the quality row says "Unavailable" because the quality list has fewer than two entries.
-        // p2..p5 of the selector are (formats, selector config, allowed itags, allowed itags); p1 and p3 of the list builder are
-        // (formats, caps). The two log calls only read their arguments.
 
         // p2 is first replaced by the formats to use: when the response has a single VP9 quality but several H.264
         // qualities the VP9 formats are left out, so that the quality list is not reduced to one entry.
@@ -503,14 +499,7 @@ val spoofVideoStreamsBytecodePatch = bytecodePatch(
             """
                 invoke-static/range { p2 .. p2 }, $AVC_QUALITY_LADDER_CLASS_DESCRIPTOR->preferMultipleAvcQualities(Ljava/util/Collection;)Ljava/util/Collection;
                 move-result-object p2
-                invoke-static/range { p2 .. p5 }, $FORMAT_SELECTION_LOG_CLASS_DESCRIPTOR->logFormatSelection(Ljava/util/Collection;Ljava/lang/Object;Ljava/util/Set;Ljava/util/Set;)V
             """,
-        )
-
-        qualityListBuilderMethodMatch.method.addInstruction(
-            0,
-            "invoke-static { p1, p3 }, $FORMAT_SELECTION_LOG_CLASS_DESCRIPTOR->" +
-                "logQualityListInput(Ljava/util/List;Ljava/lang/Object;)V",
         )
 
         // endregion

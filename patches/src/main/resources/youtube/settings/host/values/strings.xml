@@ -652,7 +652,6 @@ Hint: Long press anywhere to open the menu"</string>
     <string name="revanced_spoof_client_options_entry_android_vr_pico">Android VR (Pico)</string>
     <string name="revanced_spoof_client_options_entry_android_xr">Android XR</string>
     <string name="revanced_spoof_client_options_entry_android_creator">Android Studio</string>
-    <string name="revanced_spoof_client_options_entry_android_unplugged">Android TV</string>
     <string name="revanced_spoof_client_options_entry_android_no_sdk">Android No SDK</string>
     <string name="revanced_spoof_client_options_entry_android_no_sdk_auth">Android No SDK (logged in)</string>
     <string name="revanced_spoof_client_options_entry_android_reel">Android (Shorts)</string>
@@ -708,14 +707,6 @@ Side effects include:
 • The account is not sent with the request (logged out).
 • Kids, paid, private and age-restricted videos do not playback.
 • May stop working at any time."</string>
-    <string name="revanced_spoof_client_use_android_tv_title">Android TV</string>
-    <string name="revanced_spoof_client_use_android_tv_summary">"Spoof client to Android TV (YouTube TV).
-
-Side effects include:
-• You must be logged in.
-• No HDR video.
-• Audio track menu is missing.
-• Some live streams are not supported for playback."</string>
     <string name="revanced_spoof_client_use_tv_title">TV (TVHTML5, experimental)</string>
     <string name="revanced_spoof_client_use_tv_summary">"Spoof client to the TV web clients (TV, TV Legacy, TV Simply) of rvx and the community.
 

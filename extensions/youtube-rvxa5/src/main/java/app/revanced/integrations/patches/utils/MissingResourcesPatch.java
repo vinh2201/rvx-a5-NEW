@@ -147,8 +147,6 @@ public final class MissingResourcesPatch {
             } catch (Resources.NotFoundException ex) {
                 LogHelper.printException(MissingResourcesPatch.class, "Missing drawable id: " + id, ex);
             }
-        } else {
-            LogHelper.info(MissingResourcesPatch.class, "Unknown icon requested (resource id 0), using a transparent drawable");
         }
 
         return transparent();
@@ -164,8 +162,6 @@ public final class MissingResourcesPatch {
             } catch (Resources.NotFoundException ex) {
                 LogHelper.printException(MissingResourcesPatch.class, "Missing drawable id: " + id, ex);
             }
-        } else {
-            LogHelper.info(MissingResourcesPatch.class, "Unknown icon requested (resource id 0), using a transparent drawable");
         }
 
         return transparent();

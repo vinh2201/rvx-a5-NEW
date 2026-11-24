@@ -18,17 +18,11 @@ import java.util.Objects;
 import app.revanced.integrations.patches.misc.LiveStreamRenderer;
 import app.revanced.integrations.patches.misc.requests.PlayerRoutes.ClientType;
 import app.revanced.integrations.requests.Requester;
-import app.revanced.integrations.utils.LogHelper;
 import app.revanced.integrations.utils.ReVancedUtils;
 
 public class LiveStreamRendererRequester {
 
     private LiveStreamRendererRequester() {
-    }
-
-    private static void handleConnectionError(@NonNull String toastMessage, @Nullable Exception ex) {
-        // Only written to the log (tag "revanced"): the failure of this check is not shown to the user.
-        LogHelper.info(LiveStreamRendererRequester.class, toastMessage);
     }
 
     @Nullable
@@ -47,13 +41,12 @@ public class LiveStreamRendererRequester {
             final int responseCode = connection.getResponseCode();
             if (responseCode == 200) return Requester.parseJSONObject(connection);
 
-            // Always show a toast for this, as a non 200 response means something is broken.
-            handleConnectionError("Fetch livestreams not available: HTTP " + responseCode + " (" + clientType.name() + ")", null);
+            // A non 200 response: the check is unavailable (nothing is shown to the user).
             connection.disconnect();
         } catch (SocketTimeoutException ex) {
-            handleConnectionError("Fetch livestreams temporarily not available (API timed out)", ex);
+            // The check is temporarily unavailable (API timed out).
         } catch (IOException ex) {
-            handleConnectionError("Fetch livestreams temporarily not available: " + ex.getMessage(), ex);
+            // The check is temporarily unavailable.
         } catch (Exception ex) {
             // Logger.printException(() -> "Fetch livestreams failed", ex); // Should never happen.
         } finally {
@@ -61,29 +54,6 @@ public class LiveStreamRendererRequester {
         }
 
         return null;
-    }
-
-    /**
-     * "status / reason" of the playability status, for the log only.
-     */
-    private static String describePlayabilityStatus(@NonNull JSONObject playerResponse) {
-        try {
-            JSONObject playabilityStatus = playerResponse.getJSONObject("playabilityStatus");
-
-            String status = "?";
-            String reason = "-";
-            try {
-                status = playabilityStatus.getString("status");
-            } catch (JSONException ignored) {
-            }
-            try {
-                reason = playabilityStatus.getString("reason");
-            } catch (JSONException ignored) {
-            }
-            return status + " / " + reason;
-        } catch (JSONException e) {
-            return "no playabilityStatus";
-        }
     }
 
     private static boolean isPlayabilityStatusOk(@NonNull JSONObject playerResponse) {
@@ -183,13 +153,6 @@ public class LiveStreamRendererRequester {
             final boolean isPlayabilityOk = botCheck || isPlayabilityStatusOk(playerResponse);
             final boolean isLiveStream = isLiveStream(playerResponse);
 
-            // Kept in the log: a check that wrongly says "not playable" sends the video to the client of the
-            // "Unplayable video" setting (with fewer qualities).
-            LogHelper.info(LiveStreamRendererRequester.class, "Playability check: video=" + videoId
-                    + " client=" + clientName + " status=" + describePlayabilityStatus(playerResponse)
-                    + " live=" + isLiveStream + (botCheck ? " (bot check, not counted as unplayable)" : "")
-                    + " visitorIdSent=" + !PlayerRoutes.visitorId.isEmpty());
-
             LiveStreamRenderer renderer = new LiveStreamRenderer(
                     videoId,
                     clientName,
@@ -224,7 +187,6 @@ public class LiveStreamRendererRequester {
             // server answered the request without one with "not a bot". Ask again with the visitor id the server just
             // created (the app replaces it as soon as it sends its own).
             PlayerRoutes.visitorId = result.visitorData;
-            LogHelper.info(LiveStreamRendererRequester.class, "Playability check: asking again with the visitor id of the server");
             result = check(videoId, clientType);
         }
 

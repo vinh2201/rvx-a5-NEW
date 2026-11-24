@@ -65,8 +65,6 @@ public final class AvcQualityLadder {
                 kept.add(format);
             }
 
-            LogHelper.info(AvcQualityLadder.class, "Quality ladder: VP9 left out (only " + vp9Qualities
-                    + "), H.264 qualities: " + avcQualities);
             return kept;
         } catch (Throwable ex) {
             LogHelper.printException(AvcQualityLadder.class, "Could not check the quality ladder", ex);
