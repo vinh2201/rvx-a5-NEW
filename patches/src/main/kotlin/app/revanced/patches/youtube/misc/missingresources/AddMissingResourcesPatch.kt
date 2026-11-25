@@ -5,6 +5,7 @@ import app.revanced.patches.youtube.misc.settings.resource.patch.settingsPatch
 import app.revanced.shared.util.resources.ResourceHelper
 import app.revanced.shared.util.resources.ResourceUtils.ResourceGroup
 import app.revanced.shared.util.resources.ResourceUtils.copyResources
+import java.io.File
 
 private const val SETTINGS_SHELL_ACTIVITY = "com.google.android.apps.youtube.app.application.Shell_SettingsActivity"
 
@@ -70,12 +71,12 @@ private val DRAWABLE_ALIASES: Map<String, List<String>> = linkedMapOf(
     "youtube_shorts_share_outline_32dp" to listOf("ic_right_share_shadowed", "ic_right_share_32c"),
     "youtube_shorts_remix_outline_28dp" to listOf("ic_remix_filled_white_shadowed", "ic_remix_filled_white_24"),
     "youtube_shorts_remix_outline_32dp" to listOf("ic_remix_filled_white_shadowed", "ic_remix_filled_white_24"),
-    "youtube_shorts_save_outline_28dp" to listOf("yt_outline_bookmark_black_24"),
-    "youtube_shorts_save_outline_32dp" to listOf("yt_outline_bookmark_black_24"),
-    "youtube_shorts_save_fill_28dp" to listOf("yt_fill_bookmark_black_24"),
-    "youtube_shorts_save_fill_32dp" to listOf("yt_fill_bookmark_black_24"),
-    "youtube_shorts_save_fill_selected_32dp" to listOf("yt_fill_bookmark_black_24"),
-    "youtube_shorts_save_fill_unselected_32dp" to listOf("yt_outline_bookmark_black_24"),
+    "youtube_shorts_save_outline_28dp" to listOf("yt_outline_bookmark_white_24", "yt_outline_bookmark_black_24"),
+    "youtube_shorts_save_outline_32dp" to listOf("yt_outline_bookmark_white_24", "yt_outline_bookmark_black_24"),
+    "youtube_shorts_save_fill_28dp" to listOf("yt_fill_bookmark_white_24", "yt_fill_bookmark_black_24"),
+    "youtube_shorts_save_fill_32dp" to listOf("yt_fill_bookmark_white_24", "yt_fill_bookmark_black_24"),
+    "youtube_shorts_save_fill_selected_32dp" to listOf("yt_fill_bookmark_white_24", "yt_fill_bookmark_black_24"),
+    "youtube_shorts_save_fill_unselected_32dp" to listOf("yt_outline_bookmark_white_24", "yt_outline_bookmark_black_24"),
     "youtube_shorts_original_sound_16dp" to listOf("quantum_ic_music_note_white_24"),
     "youtube_shorts_pivot_fab" to listOf("ic_youtube_shorts_24"),
     "ic_youtube_shorts_24_cairo" to listOf("ic_youtube_shorts_24"),
@@ -142,13 +143,45 @@ val addMissingResourcesPatch = resourcePatch(
             }
         }
 
+        // Names of the drawables that are bitmaps (png / webp): only those can get a white copy with a tint.
+        val bitmapDrawables = mutableSetOf<String>()
+
         this["res"].listFiles()
             ?.filter { it.isDirectory && it.name.startsWith("drawable") }
             ?.forEach { directory ->
                 directory.listFiles()
                     ?.filter { it.isFile }
-                    ?.forEach { existingDrawables.add(it.name.substringBeforeLast(".").removeSuffix(".9")) }
+                    ?.forEach { file ->
+                        val name = file.name.substringBeforeLast(".").removeSuffix(".9")
+                        existingDrawables.add(name)
+                        if ((file.extension == "png" || file.extension == "webp") && !file.name.endsWith(".9.png")) bitmapDrawables.add(name)
+                    }
             }
+
+        // region white copies of the black icons
+
+        // The server asks for the black icons ("*_black_24"); the old app paints them as they are, so on the dark theme many were
+        // black on a dark background. Only some of them have a white sibling ("*_white_24"): the others get one here, as a bitmap
+        // that shows the black icon tinted white. The extension returns the white sibling instead of the black one on the dark
+        // theme (MissingResourcesPatch.getDarkDrawableId); the Shorts player (always dark) points to the white ones directly.
+        val blackIcon = Regex("_black_(\\d+)$")
+        val drawableDirectory = File(this["res"], "drawable").also { it.mkdirs() }
+
+        bitmapDrawables.filter { blackIcon.containsMatchIn(it) }.sorted().forEach { black ->
+            val white = black.replace(blackIcon) { "_white_" + it.groupValues[1] }
+            if (white in existingDrawables) return@forEach
+
+            File(drawableDirectory, "$white.xml").writeText(
+                """<?xml version="1.0" encoding="utf-8"?>
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/$black"
+    android:tint="#ffffffff" />
+"""
+            )
+            existingDrawables.add(white)
+        }
+
+        // endregion
 
         document("res/values/drawables.xml").use { document ->
             val rootNode = document.documentElement
@@ -165,6 +198,27 @@ val addMissingResourcesPatch = resourcePatch(
 
                 // An alias can be the target of a later alias (e.g. *_shadowed).
                 existingDrawables.add(name)
+            }
+
+            // The white sibling of every black alias (the name that the server asks for on the dark theme) points to the white
+            // sibling of its target.
+            DRAWABLE_ALIASES.forEach { (name, targets) ->
+                if (!name.contains("_black_")) return@forEach
+
+                val whiteName = name.replace("_black_", "_white_")
+                if (whiteName in existingDrawables) return@forEach
+
+                val whiteTarget = targets
+                    .firstOrNull { it in existingDrawables && it.contains("_black_") }
+                    ?.replace("_black_", "_white_")
+                    ?.takeIf { it in existingDrawables }
+                    ?: return@forEach
+
+                val element = document.createElement("drawable")
+                element.setAttribute("name", whiteName)
+                element.textContent = "@drawable/$whiteTarget"
+                rootNode.appendChild(element)
+                existingDrawables.add(whiteName)
             }
         }
 

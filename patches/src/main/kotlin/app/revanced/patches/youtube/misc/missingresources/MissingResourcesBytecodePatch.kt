@@ -17,6 +17,7 @@ import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeF
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextBindMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextMeasureMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextMeasureWithSizeMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.resourceByNameMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.pivotTabSelectedMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.playerMenuSheet1MethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.playerMenuSheet2MethodMatch
@@ -320,6 +321,29 @@ val addMissingResourcesBytecodePatch = bytecodePatch(
                     move-object/from16 p$colorIndex, v0
                 """,
                 ExternalLabel("original", method.getInstruction(0))
+            )
+        }
+
+        // endregion
+
+        // region White icons
+
+        // 11. The icons that the server asks for by name are the black ones; the old app does not paint them with the color of the
+        //     theme, so on the dark theme they were black on a dark background (only the icons that happen to have a white sibling
+        //     were white). The resource patch adds a white sibling for every black icon; at the start of the name -> id resolver
+        //     the extension returns the id of the white sibling when the theme is dark, otherwise 0 and the app goes on as usual.
+        //     No option, as the black icon on a dark background is not a style that anybody wants.
+        resourceByNameMethodMatch.method.apply {
+            // p0 = context, p1 = resource type, p2 = name; v0 is free at the start of the method.
+            addInstructionsWithLabels(
+                0,
+                """
+                    invoke-static {p0, p1, p2}, $EXTENSION_CLASS_DESCRIPTOR->getDarkDrawableId(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)I
+                    move-result v0
+                    if-eqz v0, :original
+                    return v0
+                """,
+                ExternalLabel("original", getInstruction(0))
             )
         }
 

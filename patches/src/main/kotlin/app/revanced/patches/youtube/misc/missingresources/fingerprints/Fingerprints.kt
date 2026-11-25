@@ -238,3 +238,23 @@ internal val BytecodePatchContext.lithoTextMeasureWithSizeMethodMatch by composi
 }
 
 // endregion
+
+// region Resource name -> id (white icons on the dark theme)
+
+/** True when the method asks the resources for an id by name (Resources.getIdentifier). */
+private fun com.android.tools.smali.dexlib2.iface.Method.callsGetIdentifier(): Boolean =
+    implementation?.instructions?.any { instruction ->
+        val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+        reference != null && reference.definingClass == "Landroid/content/res/Resources;" && reference.name == "getIdentifier"
+    } ?: false
+
+// 16.40.36: syu.a(Context, String type, String name)I (protected static): cached Resources.getIdentifier(name, type, package).
+// The images of the elements (feed, Shorts player) are referred to by name through it (syu.b / syu.c, called by the image loader ryv).
+internal val BytecodePatchContext.resourceByNameMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.PROTECTED, AccessFlags.STATIC)
+    returnType("I")
+    parameterTypes("Landroid/content/Context;", "Ljava/lang/String;", "Ljava/lang/String;")
+    custom { callsGetIdentifier() }
+}
+
+// endregion

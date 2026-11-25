@@ -9,6 +9,8 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 
 import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import app.revanced.integrations.utils.LogHelper;
 import app.revanced.integrations.utils.ResourceType;
@@ -248,6 +250,48 @@ public final class MissingResourcesPatch {
             return brightness > 160 ? color : null;
         } finally {
             array.recycle();
+        }
+    }
+
+    // endregion
+
+    // region White icons (dark theme)
+
+    private static final String BLACK_MARK = "_black_";
+    private static final String WHITE_MARK = "_white_";
+
+    /** Resource id of the white variant of a drawable name that the server sent, or 0 when there is none. */
+    private static final Map<String, Integer> whiteIconIds = new ConcurrentHashMap<>();
+
+    /**
+     * Called at the start of the method that turns a resource NAME (the server of the feed / the Shorts player refers to
+     * images by name) into a resource id.
+     * <p>
+     * Why: the icons that the server asks for are the black ones ("yt_outline_x_black_24", "..._cairo_black_24"). The
+     * current apps paint them with the color of the theme, this old app does not, so on the dark theme they show black on a
+     * dark background (some icons were white only because the app has a white sibling of them). The patch adds a white sibling
+     * ("..._white_...") for every black icon that has none, and on the dark theme the white one is returned instead.
+     * The light theme is not touched.
+     *
+     * @return the id of the white variant, or 0 to let the app resolve the name as usual.
+     */
+    public static int getDarkDrawableId(Context context, String type, String name) {
+        try {
+            if (context == null || name == null || !"drawable".equals(type)) return 0;
+            if (!name.contains(BLACK_MARK)) return 0;
+            // The light theme keeps the black icons.
+            if (getDarkTextColor(context) == null) return 0;
+
+            Integer cached = whiteIconIds.get(name);
+            if (cached == null) {
+                int id = ResourceUtils.identifier(name.replace(BLACK_MARK, WHITE_MARK), ResourceType.DRAWABLE, context);
+                cached = id;
+                whiteIconIds.put(name, cached);
+            }
+            return cached;
+        } catch (Exception ex) {
+            LogHelper.printException(MissingResourcesPatch.class, "Failed to look up the white variant of an icon", ex);
+            return 0;
         }
     }
 
