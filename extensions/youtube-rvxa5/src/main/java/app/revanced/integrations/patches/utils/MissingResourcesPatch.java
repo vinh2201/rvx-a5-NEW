@@ -1,12 +1,18 @@
 package app.revanced.integrations.patches.utils;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 
+import java.lang.ref.WeakReference;
+
 import app.revanced.integrations.utils.LogHelper;
+import app.revanced.integrations.utils.ResourceType;
+import app.revanced.integrations.utils.ResourceUtils;
 
 /**
  * Runtime part of the "Add missing resources" patch (YouTube 16.40.36).
@@ -170,4 +176,80 @@ public final class MissingResourcesPatch {
     private static Drawable transparent() {
         return new ColorDrawable(Color.TRANSPARENT);
     }
+
+    // region Default color of the Litho text (dark theme)
+
+    /**
+     * Result of the last theme lookup: the text color of one theme (null = the theme is not dark, keep the original color).
+     */
+    private static final class TextColorOfTheme {
+        final WeakReference<Resources.Theme> theme;
+        final ColorStateList darkColor;
+
+        TextColorOfTheme(Resources.Theme theme, ColorStateList darkColor) {
+            this.theme = new WeakReference<>(theme);
+            this.darkColor = darkColor;
+        }
+    }
+
+    private static volatile TextColorOfTheme lastTextColor;
+
+    /**
+     * Called at the start of the three methods that measure / draw a Litho text (the default color list is a parameter of each).
+     * <p>
+     * Why: the text component of the feed (video title, channel line, shelf titles ...) paints every part of the text that
+     * has no color of its own with a fixed default color, which is black. The text of the feed that this old app gets
+     * from a current server carries no color (the server relies on the theme), so on the dark theme it was black on a dark
+     * background (and the rest of the app, which reads the colors of the theme, was white).
+     * <p>
+     * The default color is replaced by the primary text color of the theme the text is shown in (the attribute that every
+     * native text of the app uses), only when that color is light, which means a dark theme. On the light theme
+     * null is returned and the original color stays, so nothing changes there. Text that has a color of its own (links, badges, the
+     * labels on the thumbnails) is not affected, because its color is applied by a span over the default one.
+     *
+     * @param context Android context of the component (carries the theme).
+     * @return the color list to paint with on a dark theme, or null to keep the original color list.
+     */
+    public static ColorStateList getDarkTextColor(Context context) {
+        if (context == null) return null;
+
+        try {
+            Resources.Theme theme = context.getTheme();
+            if (theme == null) return null;
+
+            TextColorOfTheme last = lastTextColor;
+            if (last == null || last.theme.get() != theme) {
+                last = new TextColorOfTheme(theme, resolveDarkThemeTextColor(context, theme));
+                lastTextColor = last;
+            }
+
+            return last.darkColor;
+        } catch (Exception ex) {
+            LogHelper.printException(MissingResourcesPatch.class, "Failed to read the text color of the theme", ex);
+            return null;
+        }
+    }
+
+    /**
+     * @return the primary text color of the theme when the theme is dark (that color is light), otherwise null.
+     */
+    private static ColorStateList resolveDarkThemeTextColor(Context context, Resources.Theme theme) {
+        int attribute = ResourceUtils.identifier("ytTextPrimary", ResourceType.ATTR, context);
+        if (attribute == 0) return null;
+
+        TypedArray array = theme.obtainStyledAttributes(new int[]{attribute});
+        try {
+            ColorStateList color = array.getColorStateList(0);
+            if (color == null) return null;
+
+            int rgb = color.getDefaultColor();
+            // Perceived brightness (0..255) of the color: light text means a dark theme.
+            int brightness = (Color.red(rgb) * 299 + Color.green(rgb) * 587 + Color.blue(rgb) * 114) / 1000;
+            return brightness > 160 ? color : null;
+        } finally {
+            array.recycle();
+        }
+    }
+
+    // endregion
 }

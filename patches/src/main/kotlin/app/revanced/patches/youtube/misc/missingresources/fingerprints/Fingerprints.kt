@@ -197,3 +197,44 @@ internal val BytecodePatchContext.playerMenuSheet2MethodMatch by composingFirstM
 }
 
 // endregion
+
+// region Default color of the Litho text (dark theme)
+//
+// The text component of the feed (16.40.36: dyv, text spec stw) keeps a default color list that is always black (dzi.a) and
+// paints everything that has no color of its own with it. Three static methods of the same helper class (16.40.36: dzi) take that
+// color list together with the component context (the first parameter, 16.40.36: dmn, whose field b is the Android context of the view):
+// the one that binds the text to the drawable at mount time, and the two that measure it (the second one is the variant with the
+// sizes of the parent). The extension (MissingResourcesPatch.getDarkTextColor) swaps the color list on the dark theme.
+
+// 16.40.36: dzi.f(Ldmn;Ldyz;ColorStateList;ZLssw;CharSequence;Layout;Float;ClickableSpan[];ImageSpan[])V
+internal val BytecodePatchContext.lithoTextBindMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.STATIC)
+    returnType("V")
+    parameterTypes(
+        "L", "L", "Landroid/content/res/ColorStateList;", "Z", "L", "Ljava/lang/CharSequence;", "Landroid/text/Layout;", "Ljava/lang/Float;",
+        "[Landroid/text/style/ClickableSpan;", "[Landroid/text/style/ImageSpan;",
+    )
+}
+
+// 16.40.36: dzi.h(Ldmn;Ldmr;CharSequence;TruncateAt;ZIFFFI ColorStateList;IIFII Typeface;II CharSequence;ZZ Layout;Layout;Integer;Integer; 5 x Lbaxk;)V
+internal val BytecodePatchContext.lithoTextMeasureMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.STATIC)
+    returnType("V")
+    parameterTypes(
+        "L", "L", "Ljava/lang/CharSequence;", "Landroid/text/TextUtils\$TruncateAt;", "Z", "I", "F", "F", "F", "I", "Landroid/content/res/ColorStateList;", "I", "I", "F", "I", "I",
+        "Landroid/graphics/Typeface;", "I", "I", "Ljava/lang/CharSequence;", "Z", "Z", "Landroid/text/Layout;", "Landroid/text/Layout;", "Ljava/lang/Integer;", "Ljava/lang/Integer;",
+        "L", "L", "L", "L", "L",
+    )
+}
+
+// 16.40.36: dzi.i(Ldmn;Ldmr;IILdqx;CharSequence;TruncateAt;ZIFFFI ColorStateList;II CharSequence;FI Typeface;II 5 x Lbaxk;)V
+internal val BytecodePatchContext.lithoTextMeasureWithSizeMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.STATIC)
+    returnType("V")
+    parameterTypes(
+        "L", "L", "I", "I", "L", "Ljava/lang/CharSequence;", "Landroid/text/TextUtils\$TruncateAt;", "Z", "I", "F", "F", "F", "I", "Landroid/content/res/ColorStateList;", "I", "I",
+        "Ljava/lang/CharSequence;", "F", "I", "Landroid/graphics/Typeface;", "I", "I", "L", "L", "L", "L", "L",
+    )
+}
+
+// endregion

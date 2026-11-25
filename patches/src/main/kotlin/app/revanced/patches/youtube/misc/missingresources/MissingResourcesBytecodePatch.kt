@@ -14,6 +14,9 @@ import app.revanced.patches.youtube.misc.missingresources.fingerprints.attribute
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.contextGetDrawableMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeEnumMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeFromNumberMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextBindMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextMeasureMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextMeasureWithSizeMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.pivotTabSelectedMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.playerMenuSheet1MethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.playerMenuSheet2MethodMatch
@@ -263,6 +266,61 @@ val addMissingResourcesBytecodePatch = bytecodePatch(
             if (serverRegister > 15) throw IllegalStateException("Unexpected register in the player menu")
 
             builder.addInstruction(serverReadIndex + 1, "const/4 v$serverRegister, 0x0")
+        }
+
+        // endregion
+
+        // region Litho text color
+
+        // 10. Default color of the text of the feed. The text component paints the text that has no color of its own with a fixed
+        //     black default, and the text that a current server sends to this old app has no color (the server relies on the theme),
+        //     so on the dark theme the video titles, the channel lines and the shelf titles were black on a dark background.
+        //     Three static methods (bind, two measure variants) take the default color list as a parameter and the component
+        //     context as the first parameter: at their start the color list is passed through the extension, which returns the
+        //     primary text color of the theme when the theme is dark and nothing otherwise (the original list stays on the
+        //     light theme). No option: the black text is not a style that anybody wants.
+        val contextType = "Landroid/content/Context;"
+        val colorListType = "Landroid/content/res/ColorStateList;"
+
+        listOf(lithoTextBindMethodMatch, lithoTextMeasureMethodMatch, lithoTextMeasureWithSizeMethodMatch).forEach { match ->
+            val method = match.method
+            val parameters = method.parameterTypes.map { it.toString() }
+
+            val colorIndex = parameters.indexOf(colorListType)
+            if (colorIndex < 0 || parameters.lastIndexOf(colorListType) != colorIndex) {
+                throw IllegalStateException("Unexpected parameters of the Litho text method")
+            }
+            // No wide (long / double) parameter before the color list, so the register of the parameter is its index.
+            if (parameters.take(colorIndex).any { it == "J" || it == "D" }) {
+                throw IllegalStateException("Unexpected wide parameter in the Litho text method")
+            }
+
+            // v0 is free at the start of a method (a local register is written before it is read; every method has at least one).
+            val locals = method.implementation!!.registerCount - parameters.sumOf { if (it == "J" || it == "D") 2 else 1 }
+            if (locals < 1) throw IllegalStateException("No free register in the Litho text method")
+
+            // First parameter: the component context. Its class has exactly one instance field of the Android context type. The field
+            // is read directly: the getter of that class returns the application context, which has no dark theme.
+            val componentContextType = parameters.first()
+            val componentContext = classDefs.toList().firstOrNull { it.type == componentContextType }
+                ?: throw IllegalStateException("Component context class of the Litho text not found")
+            val contextField = componentContext.fields.singleOrNull {
+                it.type == contextType && !AccessFlags.STATIC.isSet(it.accessFlags)
+            } ?: throw IllegalStateException("Android context field of the component context not found")
+
+            // The extension returns the color list to use on a dark theme, or null (light theme: the original list stays).
+            method.addInstructionsWithLabels(
+                0,
+                """
+                    move-object/from16 v0, p0
+                    iget-object v0, v0, $componentContextType->${contextField.name}:$contextType
+                    invoke-static {v0}, $EXTENSION_CLASS_DESCRIPTOR->getDarkTextColor($contextType)$colorListType
+                    move-result-object v0
+                    if-eqz v0, :original
+                    move-object/from16 p$colorIndex, v0
+                """,
+                ExternalLabel("original", method.getInstruction(0))
+            )
         }
 
         // endregion
