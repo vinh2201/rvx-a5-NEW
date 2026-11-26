@@ -253,6 +253,37 @@ public final class MissingResourcesPatch {
         }
     }
 
+    /** Largest channel value of a color that is still "almost black" (0x59 = 89 of 255): black, #0F0F0F, the dark browns ... */
+    private static final int ALMOST_BLACK_MAX_CHANNEL = 0x59;
+
+    /**
+     * Called for every part of a text (a "run") that the server paints with its own color, before the color span is created.
+     * <p>
+     * Why: the server of the posts / the description of the video sends the colors of the light theme (text #0F0F0F, dark browns
+     * on the tinted description panel) and this old app has no other color to use, so on the dark theme that text was almost
+     * black on a dark background. On a dark theme an almost black run color is replaced by the primary text color of the theme
+     * (the alpha of the original color is kept). Every other color (links, red badges, grays ...) and the light theme are
+     * not touched.
+     *
+     * @param color   ARGB color of the run.
+     * @param context Android context of the text component (carries the theme).
+     * @return the color to paint the run with.
+     */
+    public static int adjustTextRunColor(int color, Context context) {
+        try {
+            int max = Math.max(Color.red(color), Math.max(Color.green(color), Color.blue(color)));
+            if (max > ALMOST_BLACK_MAX_CHANNEL) return color;
+
+            ColorStateList primary = getDarkTextColor(context);
+            if (primary == null) return color;
+
+            return (color & 0xFF000000) | (primary.getDefaultColor() & 0x00FFFFFF);
+        } catch (Exception ex) {
+            LogHelper.printException(MissingResourcesPatch.class, "Failed to adjust the color of a text run", ex);
+            return color;
+        }
+    }
+
     // endregion
 
     // region White icons (dark theme)

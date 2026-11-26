@@ -3,6 +3,7 @@ package app.revanced.patches.youtube.misc.missingresources
 import app.revanced.patcher.patch.resourcePatch
 import app.revanced.patches.youtube.misc.settings.resource.patch.settingsPatch
 import app.revanced.shared.util.resources.ResourceHelper
+import app.revanced.shared.util.resources.ResourceUtils
 import app.revanced.shared.util.resources.ResourceUtils.ResourceGroup
 import app.revanced.shared.util.resources.ResourceUtils.copyResources
 import java.io.File
@@ -143,8 +144,8 @@ val addMissingResourcesPatch = resourcePatch(
             }
         }
 
-        // Names of the drawables that are bitmaps (png / webp): only those can get a white copy with a tint.
-        val bitmapDrawables = mutableSetOf<String>()
+        // Bitmap drawables (png / webp) and the resource directories (densities) that hold them: only those can get a white copy.
+        val bitmapDrawables = mutableMapOf<String, MutableList<String>>()
 
         this["res"].listFiles()
             ?.filter { it.isDirectory && it.name.startsWith("drawable") }
@@ -154,30 +155,46 @@ val addMissingResourcesPatch = resourcePatch(
                     ?.forEach { file ->
                         val name = file.name.substringBeforeLast(".").removeSuffix(".9")
                         existingDrawables.add(name)
-                        if ((file.extension == "png" || file.extension == "webp") && !file.name.endsWith(".9.png")) bitmapDrawables.add(name)
+                        if ((file.extension == "png" || file.extension == "webp") && !file.name.endsWith(".9.png")) {
+                            bitmapDrawables.getOrPut(name) { mutableListOf() }.add(directory.name)
+                        }
                     }
             }
 
         // region white copies of the black icons
 
         // The server asks for the black icons ("*_black_24"); the old app paints them as they are, so on the dark theme many were
-        // black on a dark background. Only some of them have a white sibling ("*_white_24"): the others get one here, as a bitmap
-        // that shows the black icon tinted white. The extension returns the white sibling instead of the black one on the dark
-        // theme (MissingResourcesPatch.getDarkDrawableId); the Shorts player (always dark) points to the white ones directly.
+        // black on a dark background. Only some of them have a white sibling ("*_white_24"): the others get one here. The extension
+        // returns the white sibling instead of the black one on the dark theme (MissingResourcesPatch.getDarkDrawableId); the Shorts
+        // player (always dark) points to the white ones directly.
+        //
+        // The white siblings are real PNG files (the black icons with the color set to white, same size and transparency), bundled
+        // with the patch for every density that holds the black icon. A bitmap XML that only tints the black icon is not enough: the
+        // image loader of the feed reads the bitmap out of the drawable, so the tint was lost and the icon stayed black. The XML tint
+        // is only the fallback for a black icon that has no bundled white PNG (another build of the app).
         val blackIcon = Regex("_black_(\\d+)$")
+        val bundledIcons = "youtube/addmissingresources"
+        val classLoader = ResourceUtils.javaClass.classLoader
         val drawableDirectory = File(this["res"], "drawable").also { it.mkdirs() }
 
-        bitmapDrawables.filter { blackIcon.containsMatchIn(it) }.sorted().forEach { black ->
+        bitmapDrawables.keys.filter { blackIcon.containsMatchIn(it) }.sorted().forEach { black ->
             val white = black.replace(blackIcon) { "_white_" + it.groupValues[1] }
             if (white in existingDrawables) return@forEach
 
-            File(drawableDirectory, "$white.xml").writeText(
-                """<?xml version="1.0" encoding="utf-8"?>
+            val bundledDirectories = bitmapDrawables.getValue(black).distinct()
+                .filter { classLoader.getResource("$bundledIcons/$it/$white.png") != null }
+
+            if (bundledDirectories.isNotEmpty()) {
+                copyResources(bundledIcons, *bundledDirectories.map { ResourceGroup(it, "$white.png") }.toTypedArray())
+            } else {
+                File(drawableDirectory, "$white.xml").writeText(
+                    """<?xml version="1.0" encoding="utf-8"?>
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     android:src="@drawable/$black"
     android:tint="#ffffffff" />
 """
-            )
+                )
+            }
             existingDrawables.add(white)
         }
 

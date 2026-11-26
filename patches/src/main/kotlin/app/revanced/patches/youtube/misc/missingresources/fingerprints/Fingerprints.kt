@@ -237,6 +237,22 @@ internal val BytecodePatchContext.lithoTextMeasureWithSizeMethodMatch by composi
     )
 }
 
+/** True when the method creates a ForegroundColorSpan (the color of a part of a text). */
+private fun com.android.tools.smali.dexlib2.iface.Method.createsForegroundColorSpan(): Boolean =
+    implementation?.instructions?.any { instruction ->
+        val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+        reference != null && reference.definingClass == "Landroid/text/style/ForegroundColorSpan;" && reference.name == "<init>"
+    } ?: false
+
+// 16.40.36: stw.c(Lszu;Ldmn;Laxwp;Lszo;Ltce;Ltav;Map;Ltaa;ZZ)CharSequence: builds the text of a text component from the server's
+// text (Laxwp) with a ForegroundColorSpan for every run that has a color (the color is read from the run, Laxxl.aR()).
+internal val BytecodePatchContext.lithoTextRunColorMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.STATIC)
+    returnType("Ljava/lang/CharSequence;")
+    parameterTypes("L", "L", "L", "L", "L", "L", "Ljava/util/Map;", "L", "Z", "Z")
+    custom { createsForegroundColorSpan() }
+}
+
 // endregion
 
 // region Resource name -> id (white icons on the dark theme)

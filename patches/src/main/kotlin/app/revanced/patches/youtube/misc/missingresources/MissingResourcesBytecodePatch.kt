@@ -17,6 +17,7 @@ import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeF
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextBindMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextMeasureMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextMeasureWithSizeMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.lithoTextRunColorMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.resourceByNameMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.pivotTabSelectedMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.playerMenuSheet1MethodMatch
@@ -28,10 +29,13 @@ import app.revanced.shared.util.integrations.Constants.UTILS_PATH
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.util.MethodUtil
 
@@ -321,6 +325,65 @@ val addMissingResourcesBytecodePatch = bytecodePatch(
                     move-object/from16 p$colorIndex, v0
                 """,
                 ExternalLabel("original", method.getInstruction(0))
+            )
+        }
+
+        // 10b. Color of the parts of a text that the server colors itself. The text of the posts and of the description of a video
+        //      comes with the colors of the light theme (almost black text, dark browns on the tinted description panel), which
+        //      the old app applies as they are (a ForegroundColorSpan per run), so the text was almost black on the dark theme.
+        //      Right before the span is created the color goes through the extension: on a dark theme an almost black color becomes
+        //      the primary text color of the theme; all other colors and the light theme stay as they are.
+        lithoTextRunColorMethodMatch.method.apply {
+            val parameters = parameterTypes.map { it.toString() }
+            val componentContextType = parameters[1]
+            val componentContext = classDefs.toList().firstOrNull { it.type == componentContextType }
+                ?: throw IllegalStateException("Component context class of the Litho text run not found")
+            val contextField = componentContext.fields.singleOrNull {
+                it.type == contextType && !AccessFlags.STATIC.isSet(it.accessFlags)
+            } ?: throw IllegalStateException("Android context field of the component context not found (text run)")
+
+            val instructions = implementation!!.instructions.toList()
+            val spanInitIndices = instructions.indices.filter { index ->
+                val instruction = instructions[index]
+                val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+                instruction.opcode == Opcode.INVOKE_DIRECT &&
+                    reference?.definingClass == "Landroid/text/style/ForegroundColorSpan;" && reference.name == "<init>"
+            }
+            if (spanInitIndices.size != 1) throw IllegalStateException("Unexpected number of color spans in the Litho text run method")
+            val spanInitIndex = spanInitIndices.single()
+
+            // invoke-direct {span, color}, ForegroundColorSpan-><init>(I)V, right after long-to-int color, runColor.
+            val spanInit = instructions[spanInitIndex] as FiveRegisterInstruction
+            if (spanInit.registerCount != 2) throw IllegalStateException("Unexpected color span constructor call")
+            val colorRegister = spanInit.registerD
+
+            val toInt = instructions[spanInitIndex - 1]
+            if (toInt.opcode != Opcode.LONG_TO_INT || (toInt as TwoRegisterInstruction).registerA != colorRegister) {
+                throw IllegalStateException("Unexpected color conversion before the color span")
+            }
+            // The register that held the long color is dead after the conversion: the original code overwrites it right after the
+            // span is created (move-result-wide of the next call), so it is free to hold the context for the call.
+            val tempRegister = toInt.registerB
+            val afterCall = instructions[spanInitIndex + 1]
+            val afterResult = instructions[spanInitIndex + 2]
+            if (afterCall.opcode != Opcode.INVOKE_VIRTUAL ||
+                afterResult.opcode != Opcode.MOVE_RESULT_WIDE ||
+                (afterResult as OneRegisterInstruction).registerA != tempRegister
+            ) {
+                throw IllegalStateException("The register of the long color is not free after the color span")
+            }
+            if (colorRegister > 15 || tempRegister > 15 || colorRegister == tempRegister) {
+                throw IllegalStateException("Unexpected registers around the color span")
+            }
+
+            addInstructions(
+                spanInitIndex,
+                """
+                    move-object/from16 v$tempRegister, p1
+                    iget-object v$tempRegister, v$tempRegister, $componentContextType->${contextField.name}:$contextType
+                    invoke-static {v$colorRegister, v$tempRegister}, $EXTENSION_CLASS_DESCRIPTOR->adjustTextRunColor(I$contextType)I
+                    move-result v$colorRegister
+                """
             )
         }
 
