@@ -11,9 +11,12 @@ import android.graphics.drawable.Drawable;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import app.revanced.integrations.utils.LogHelper;
 import app.revanced.integrations.utils.ResourceType;
+import app.revanced.integrations.utils.ReVancedUtils;
 import app.revanced.integrations.utils.ResourceUtils;
 
 /**
@@ -286,43 +289,233 @@ public final class MissingResourcesPatch {
 
     // endregion
 
-    // region White icons (dark theme)
+    // region Icons by name (dark theme + names that only newer apps know)
 
     private static final String BLACK_MARK = "_black_";
     private static final String WHITE_MARK = "_white_";
 
-    /** Resource id of the white variant of a drawable name that the server sent, or 0 when there is none. */
+    /** An icon that was found for a name: its resource id and name, and whether it stands in for another name. */
+    private static final class IconByName {
+        final int id;
+        final String name;
+        final boolean substitute;
+
+        IconByName(int id, String name, boolean substitute) {
+            this.id = id;
+            this.name = name;
+            this.substitute = substitute;
+        }
+    }
+
+    private static final IconByName NO_ICON = new IconByName(0, "", false);
+
+    /** Result of the lookup of a drawable name (resource ids never change while the app runs). */
+    private static final Map<String, IconByName> iconsByName = new ConcurrentHashMap<>();
+
+    /** Resource id of the white variant of a drawable name, or 0 when there is none. */
     private static final Map<String, Integer> whiteIconIds = new ConcurrentHashMap<>();
 
     /**
-     * Called at the start of the method that turns a resource NAME (the server of the feed / the Shorts player refers to
-     * images by name) into a resource id.
+     * Name of an icon of the app: yt_{outline|fill}_{picture}[_cairo|_experimental]_{black|white}_{size}.
+     * Groups: 1 = style, 2 = picture, 3 = color, 4 = size.
+     */
+    private static final Pattern ICON_NAME = Pattern.compile(
+            "^yt_(outline|fill|filled)_(?:experimental_)?(.+?)(?:_(?:cairo|experimental|v\\d{1,2}))*_(black|white)_(\\d{1,3})$");
+
+    /** Sizes that are tried when the size that was asked for does not exist (all drawables are scaled by the view anyway). */
+    private static final int[] FALLBACK_SIZES = {24, 18, 16, 20};
+
+    /**
+     * The same picture under another name: names that newer apps use -> names that 16.40.36 has.
+     * (picture name of the server, picture name of this app)
+     */
+    private static final String[][] PICTURE_ALIASES = {
+            {"thumbs_up", "thumb_up"},
+            {"thumbs_down", "thumb_down"},
+            {"like", "thumb_up"},
+            {"dislike", "thumb_down"},
+            {"comment", "message_bubble_right"},
+            {"comments", "message_bubble_right"},
+            {"reply", "message_bubble_right"},
+            {"chat_bubble", "message_bubble_right"},
+            {"chat", "message_bubble_right"},
+            {"message", "message_bubble_right"},
+            {"more_vert", "overflow_vertical"},
+            {"more_vertical", "overflow_vertical"},
+            {"more_horiz", "overflow_horizontal"},
+            {"more_horizontal", "overflow_horizontal"},
+            {"delete", "trash_can"},
+            {"trash", "trash_can"},
+            {"edit", "pencil"},
+            {"close", "x_mark"},
+            {"cancel", "x_mark"},
+            {"clear", "x_mark"},
+            {"favorite", "heart"},
+            {"notifications", "bell"},
+            {"notification", "bell"},
+            {"playlist_add", "list_add"},
+            {"watch_later", "clock"},
+            {"history", "clock"},
+            {"info", "info_circle"},
+            {"help", "question_circle"},
+            {"settings", "gear"},
+    };
+
+    /**
+     * Finds an icon for a drawable name: the icon itself, or when the app has no icon with that name the icon of the same
+     * picture under the name that 16.40.36 uses (without "_cairo", another size, a different spelling of the picture).
+     */
+    private static IconByName findIcon(Context context, String name) {
+        IconByName found = iconsByName.get(name);
+        if (found != null) return found;
+
+        int id = ResourceUtils.identifier(name, ResourceType.DRAWABLE, context);
+        if (id != 0) {
+            found = new IconByName(id, name, false);
+        } else {
+            found = findSubstitute(context, name);
+        }
+
+        iconsByName.put(name, found);
+        return found;
+    }
+
+    private static IconByName findSubstitute(Context context, String name) {
+        Matcher matcher = ICON_NAME.matcher(name);
+        if (!matcher.matches()) return NO_ICON;
+
+        String style = matcher.group(1);
+        if (style.equals("filled")) style = "fill";
+        String picture = matcher.group(2);
+        String color = matcher.group(3);
+        int size = Integer.parseInt(matcher.group(4));
+
+        String[] pictures = {picture, aliasOf(picture)};
+        // "fill" icons that this app does not have fall back to the outlined picture.
+        String[] styles = style.equals("fill") ? new String[]{"fill", "outline"} : new String[]{style};
+
+        for (String candidatePicture : pictures) {
+            if (candidatePicture == null) continue;
+
+            for (String candidateStyle : styles) {
+                for (int i = -1; i < FALLBACK_SIZES.length; i++) {
+                    int candidateSize = i < 0 ? size : FALLBACK_SIZES[i];
+                    if (i >= 0 && candidateSize == size) continue;
+
+                    String candidate = "yt_" + candidateStyle + "_" + candidatePicture + "_" + color + "_" + candidateSize;
+                    if (candidate.equals(name)) continue;
+
+                    int id = ResourceUtils.identifier(candidate, ResourceType.DRAWABLE, context);
+                    if (id != 0) return new IconByName(id, candidate, true);
+                }
+            }
+        }
+
+        return NO_ICON;
+    }
+
+    private static String aliasOf(String picture) {
+        for (String[] alias : PICTURE_ALIASES) {
+            if (alias[0].equals(picture) && !alias[1].equals(picture)) return alias[1];
+        }
+        return null;
+    }
+
+    /** Resource id of the white sibling of a black drawable name, or 0. */
+    private static int whiteIconId(Context context, String blackName) {
+        Integer cached = whiteIconIds.get(blackName);
+        if (cached == null) {
+            cached = ResourceUtils.identifier(blackName.replace(BLACK_MARK, WHITE_MARK), ResourceType.DRAWABLE, context);
+            whiteIconIds.put(blackName, cached);
+        }
+        return cached;
+    }
+
+    /**
+     * Called at the start of the method that turns a resource NAME (the server of the feed / the comments / the Shorts player
+     * refers to images by name) into a resource id.
      * <p>
-     * Why: the icons that the server asks for are the black ones ("yt_outline_x_black_24", "..._cairo_black_24"). The
-     * current apps paint them with the color of the theme, this old app does not, so on the dark theme they show black on a
-     * dark background (some icons were white only because the app has a white sibling of them). The patch adds a white sibling
+     * Why (dark theme): the icons that the server asks for are the black ones ("yt_outline_x_black_24"). The current apps
+     * paint them with the color of the theme, this old app does not, so on the dark theme they show black on a dark
+     * background (some icons were white only because the app has a white sibling of them). The patch adds a white sibling
      * ("..._white_...") for every black icon that has none, and on the dark theme the white one is returned instead.
      * The light theme is not touched.
+     * <p>
+     * Why (new names): the server also asks for icons that only newer apps have (for example "yt_outline_thumb_up_cairo_black_24"
+     * for the like / dislike / reply icons under a comment). 16.40.36 resolves such a name to id 0, which is drawn as nothing at
+     * all, on the light theme as well. For those names the icon of the same picture that this app has is returned
+     * (see {@link #findSubstitute}).
      *
-     * @return the id of the white variant, or 0 to let the app resolve the name as usual.
+     * @return the id of the icon to use, or 0 to let the app resolve the name as usual.
      */
     public static int getDarkDrawableId(Context context, String type, String name) {
         try {
             if (context == null || name == null || !"drawable".equals(type)) return 0;
-            if (!name.contains(BLACK_MARK)) return 0;
-            // The light theme keeps the black icons.
-            if (getDarkTextColor(context) == null) return 0;
 
-            Integer cached = whiteIconIds.get(name);
-            if (cached == null) {
-                int id = ResourceUtils.identifier(name.replace(BLACK_MARK, WHITE_MARK), ResourceType.DRAWABLE, context);
-                cached = id;
-                whiteIconIds.put(name, cached);
+            IconByName icon = findIcon(context, name);
+            if (icon.id == 0) return 0;
+
+            // The light theme keeps the black icons.
+            if (icon.name.contains(BLACK_MARK) && getDarkTextColor(context) != null) {
+                int white = whiteIconId(context, icon.name);
+                if (white != 0) return white;
             }
-            return cached;
+
+            return icon.substitute ? icon.id : 0;
         } catch (Exception ex) {
-            LogHelper.printException(MissingResourcesPatch.class, "Failed to look up the white variant of an icon", ex);
+            LogHelper.printException(MissingResourcesPatch.class, "Failed to look up an icon by its name", ex);
             return 0;
+        }
+    }
+
+    // endregion
+
+    // region White thumbs (dark theme)
+
+    /** Black thumb icons that the icon type table (id based) returns: yt_{outline|fill}_thumb_{up|down}_black_NN. */
+    private static final Pattern THUMB_ICON_NAME = Pattern.compile("^yt_(?:outline|fill)_thumb_(?:up|down)_black_\\d{1,3}$");
+
+    /** Resource id of a black thumb icon -> id of its white sibling (0 = leave the icon as it is). */
+    private static final Map<Integer, Integer> whiteThumbIds = new ConcurrentHashMap<>();
+
+    /**
+     * Called with the result of the icon type -> drawable id table (the table of the black icons of the app).
+     * <p>
+     * Why: the like button of the video (and the like / dislike pictures that are looked up by icon type) get the black
+     * thumb drawable from that table and are not painted with the color of the theme, so on the dark theme the like button was
+     * black on a dark background. On the dark theme the white sibling of the thumb drawable is returned instead. Only the
+     * thumbs are changed: every other picture of that table is painted by the app itself. The light theme is not touched.
+     *
+     * @param id resource id from the table.
+     * @return the id to use.
+     */
+    public static int getDarkIconId(int id) {
+        try {
+            if (id == 0) return 0;
+
+            TextColorOfTheme last = lastTextColor;
+            // Unknown theme (nothing was measured yet) or the light theme.
+            if (last == null || last.darkColor == null) return id;
+
+            Integer cached = whiteThumbIds.get(id);
+            if (cached == null) {
+                Context context = ReVancedUtils.getContext();
+                // The app context is not known yet: leave the icon as it is and ask again next time.
+                if (context == null) return id;
+
+                int white = 0;
+                String name = context.getResources().getResourceEntryName(id);
+                if (name != null && THUMB_ICON_NAME.matcher(name).matches()) {
+                    white = ResourceUtils.identifier(name.replace(BLACK_MARK, WHITE_MARK), ResourceType.DRAWABLE, context);
+                }
+                cached = white;
+                whiteThumbIds.put(id, cached);
+            }
+
+            return cached != 0 ? cached : id;
+        } catch (Exception ex) {
+            LogHelper.printException(MissingResourcesPatch.class, "Failed to look up the white thumb icon", ex);
+            return id;
         }
     }
 

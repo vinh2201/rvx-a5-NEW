@@ -274,3 +274,30 @@ internal val BytecodePatchContext.resourceByNameMethodMatch by composingFirstMet
 }
 
 // endregion
+
+// region Black icon table (like button on the dark theme)
+
+private fun com.android.tools.smali.dexlib2.iface.Method.callsEnumMapContainsKey(): Boolean =
+    implementation?.instructions?.any { instruction ->
+        val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+        reference != null && reference.definingClass == "Ljava/util/EnumMap;" && reference.name == "containsKey"
+    } ?: false
+
+// 16.40.36: gnf.b(armu, boolean)I = the table of the black icons (icon type -> drawable id, EnumMap) with the "selected" flag.
+// It is the only public final (type, boolean)->int method that reads an EnumMap.
+internal val BytecodePatchContext.blackIconTableWithFlagMethodMatch by composingFirstMethod {
+    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
+    returnType("I")
+    parameterTypes("L", "Z")
+    custom { callsEnumMapContainsKey() }
+}
+
+// 16.40.36: gnf.a(armu)I, the same table without the flag (looked up inside the class found above).
+internal val ClassDef.blackIconTableMethodMatch by ClassDefComposing.composingFirstMethod {
+    accessFlags(AccessFlags.PUBLIC, AccessFlags.FINAL)
+    returnType("I")
+    parameterTypes("L")
+    custom { callsEnumMapContainsKey() }
+}
+
+// endregion

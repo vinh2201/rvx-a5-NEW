@@ -11,6 +11,8 @@ import app.revanced.patcher.patch.bytecodePatch
 import app.revanced.patches.youtube.misc.integrations.patch.integrationsPatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.actionBarConfigMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.attributeResolverMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.blackIconTableMethodMatch
+import app.revanced.patches.youtube.misc.missingresources.fingerprints.blackIconTableWithFlagMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.contextGetDrawableMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeEnumMethodMatch
 import app.revanced.patches.youtube.misc.missingresources.fingerprints.iconTypeFromNumberMethodMatch
@@ -411,5 +413,31 @@ val addMissingResourcesBytecodePatch = bytecodePatch(
         }
 
         // endregion
+
+        // 12. White thumbs on the dark theme: the like button of the video (and every picture that is looked up by icon type)
+        //     gets the black thumb drawable from the table of the black icons and is not painted with the color of the theme.
+        //     Every return of the two lookup methods of that table goes through the extension, which returns the white sibling
+        //     of a black thumb when the theme is dark (see MissingResourcesPatch.getDarkIconId); any other id is returned as it is.
+        listOf(
+            blackIconTableWithFlagMethodMatch.method,
+            blackIconTableWithFlagMethodMatch.immutableClassDef.blackIconTableMethodMatch.method,
+        ).forEach { method ->
+            val returns = method.implementation!!.instructions.withIndex()
+                .filter { it.value.opcode == Opcode.RETURN }
+                .map { it.index to (it.value as OneRegisterInstruction).registerA }
+
+            check(returns.isNotEmpty()) { "The black icon table method has no return instruction" }
+
+            // From the last to the first, so that the indexes that are still to be used do not move.
+            returns.asReversed().forEach { (index, register) ->
+                method.addInstructions(
+                    index,
+                    """
+                        invoke-static {v$register}, $EXTENSION_CLASS_DESCRIPTOR->getDarkIconId(I)I
+                        move-result v$register
+                    """
+                )
+            }
+        }
     }
 }
